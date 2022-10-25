@@ -12,10 +12,6 @@ menuconfig:
 build:
 	./build.sh build
 
-.PHONY: flash
-flash:
-	./build.sh flash
-
 .PHONY: clean
 clean:
 	./build.sh clean
