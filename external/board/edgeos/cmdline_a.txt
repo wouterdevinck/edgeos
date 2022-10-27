@@ -1,3 +1,8 @@
 # root=/dev/mmcblk0p5 rootwait console=tty1 console=ttyAMA0,115200
-# root=/dev/mmcblk0p5 rootwait console=tty1 console=ttyAMA0,115200 sdhci.debug_quirks2=4
-dwc_otg.lpm_enable=0 console=ttyAMA0,115200 console=tty1 root=/dev/mmcblk0p5 rw rootfstype=ext4 elevator=deadline fsck.repair=yes panic=10 rootdelay=10
+root=/dev/mmcblk0p5 rootwait console=tty1 console=ttyAMA0,115200 sdhci.debug_quirks2=4
+# dwc_otg.lpm_enable=0 console=ttyAMA0,115200 console=tty1 root=/dev/mmcblk0p5 rw rootfstype=ext4 elevator=deadline fsck.repair=yes panic=10 rootdelay=10
+
+# Note to self:
+# [    3.585799] FAT-fs (mmcblk0p1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+# [    3.598999] FAT-fs (mmcblk0p2): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+# [    3.614543] FAT-fs (mmcblk0p3): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
