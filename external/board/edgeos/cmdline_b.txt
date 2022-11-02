@@ -1,2 +1,0 @@
-root=/dev/mmcblk0p6 rootwait console=tty1 console=ttyAMA0,115200 panic=10
-# sdhci.debug_quirks2=4 rootfstype=ext4 elevator=deadline panic=10 rootdelay=10 fsck.repair=yes

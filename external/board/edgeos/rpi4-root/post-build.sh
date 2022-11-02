@@ -10,11 +10,6 @@ if [ -e ${TARGET_DIR}/etc/inittab ]; then
 tty1::respawn:/sbin/getty -L  tty1 0 vt100 # HDMI console' ${TARGET_DIR}/etc/inittab
 fi
 
-# Additional files
-install -D -m 0644 ${BR2_EXTERNAL_EDGEOS_PATH}/board/edgeos/autoboot.txt ${BINARIES_DIR}/autoboot.txt
-install -D -m 0644 ${BR2_EXTERNAL_EDGEOS_PATH}/board/edgeos/cmdline_a.txt ${BINARIES_DIR}/cmdline_a.txt
-install -D -m 0644 ${BR2_EXTERNAL_EDGEOS_PATH}/board/edgeos/cmdline_b.txt ${BINARIES_DIR}/cmdline_b.txt
-
 # Mount FAT partitions
 if [ -e ${TARGET_DIR}/etc/fstab ]; then
     mkdir -p ${TARGET_DIR}/boot/autoboot

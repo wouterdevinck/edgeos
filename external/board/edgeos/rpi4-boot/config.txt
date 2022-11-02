@@ -1,0 +1,26 @@
+[all]
+
+start_file=start4.elf
+fixup_file=fixup4.dat
+kernel=Image
+initramfs rootfs.cpio.zst
+
+uart_2ndstage=1
+
+disable_overscan=1
+
+gpu_mem_256=100
+gpu_mem_512=100
+gpu_mem_1024=100
+
+dtoverlay=miniuart-bt
+dtoverlay=krnbt=on
+dtoverlay=vc4-kms-v3d-pi4
+dtoverlay=imx219
+
+arm_64bit=1
+
+[pi4]
+arm_boost=1
+
+[all]

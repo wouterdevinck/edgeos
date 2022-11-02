@@ -1,27 +1,21 @@
 #!/bin/bash
 set -e
 
-CONFIG=edgeos_defconfig
 BR_VERSION=2022.08.1
+
+CONFIG_RPI4_BOOT=edgeos_rpi4_boot_defconfig
+CONFIG_RPI4_ROOT=edgeos_rpi4_root_defconfig
 
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 WORKDIR="$SCRIPT_DIR/buildroot"
 EXTDIR="$SCRIPT_DIR/external"
 OUTDIR="$SCRIPT_DIR/output"
 
-CONFPATH="$EXTDIR/configs/$CONFIG"
-IMGPATH="$OUTDIR/images/sdcard.img"
+CONFPATH_RPI4_BOOT="$EXTDIR/configs/$CONFIG_RPI4_BOOT"
+CONFPATH_RPI4_ROOT="$EXTDIR/configs/$CONFIG_RPI4_ROOT"
 
-function printUsage {
-  echo "Usage: $0 prepare|menuconfig|build|flash|clean"
-  echo ""
-  echo "   prepare    - Download buildroot and unpack into working directory."
-  echo "   menuconfig - Run the menuconfig utility."
-  echo "   build      - Build the image."
-  echo "   flash      - Write the image to the SD card."
-  echo "   clean      - Clean up."
-  echo ""
-}
+OUTDIR_RPI4_BOOT="$OUTDIR/rpi4-boot"
+OUTDIR_RPI4_ROOT="$OUTDIR/rpi4-root"
 
 case $1 in
 
@@ -33,7 +27,7 @@ case $1 in
   rm buildroot-$BR_VERSION.tar.gz
   ;;
 
-"build"|"menuconfig")
+"build"|"menuconfig-rpi4-boot"|"menuconfig-rpi4-root")
   if [ ! -d "$WORKDIR" ]; then
     printf "\nPlease run prepare first.\n\n"
     exit 2
@@ -41,21 +35,37 @@ case $1 in
   cd $WORKDIR
   ;;&
 
-"menuconfig")
-  make O=$OUTDIR BR2_DEFCONFIG=$CONFPATH  defconfig
-  make O=$OUTDIR BR2_EXTERNAL=$EXTDIR     menuconfig
-  make O=$OUTDIR BR2_DEFCONFIG=$CONFPATH  savedefconfig
+"menuconfig-rpi4-boot")
+  make O=$OUTDIR_RPI4_BOOT BR2_DEFCONFIG=$CONFPATH_RPI4_BOOT defconfig
+  make O=$OUTDIR_RPI4_BOOT BR2_EXTERNAL=$EXTDIR menuconfig
+  make O=$OUTDIR_RPI4_BOOT BR2_DEFCONFIG=$CONFPATH_RPI4_BOOT savedefconfig
+  ;;
+
+"menuconfig-rpi4-root")
+  make O=$OUTDIR_RPI4_ROOT BR2_DEFCONFIG=$CONFPATH_RPI4_ROOT defconfig
+  make O=$OUTDIR_RPI4_ROOT BR2_EXTERNAL=$EXTDIR menuconfig
+  make O=$OUTDIR_RPI4_ROOT BR2_DEFCONFIG=$CONFPATH_RPI4_ROOT savedefconfig
   ;;
 
 "build")
-  make O=$OUTDIR BR2_EXTERNAL=$EXTDIR $CONFIG
-  make O=$OUTDIR
-  ls -lh $IMGPATH
-  ;;
 
-"flash")
-  dd if=$IMGPATH of=/dev/mmcblk0 bs=1024 status=progress
-  sync
+  # Build FAT boot partition - containing firmware (& config), kernel and initramfs
+  make O=$OUTDIR_RPI4_BOOT BR2_EXTERNAL=$EXTDIR $CONFIG_RPI4_BOOT
+  make O=$OUTDIR_RPI4_BOOT
+
+  # Build rootfs
+  make O=$OUTDIR_RPI4_ROOT BR2_EXTERNAL=$EXTDIR $CONFIG_RPI4_ROOT
+  make O=$OUTDIR_RPI4_ROOT
+
+  # Build SD card image
+  cd $OUTDIR
+  cp $OUTDIR_RPI4_BOOT/images/autoboot.vfat .
+  cp $OUTDIR_RPI4_BOOT/images/boot.vfat .
+  cp $OUTDIR_RPI4_ROOT/images/rootfs.ext4 .
+
+  # TODO - this is not made to be run from here
+  PATH=$PATH:$OUTDIR_RPI4_ROOT/host/bin $WORKDIR/support/scripts/genimage.sh -c $EXTDIR/board/edgeos/rpi4-sdcard-genimage.cfg
+
   ;;
 
 "clean")
@@ -63,7 +73,7 @@ case $1 in
   ;;
 
 *)
-  printUsage
+  echo "Unknown command"
   ;;
 
 esac

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+DT_BOOTLOADER_PARTITION=/proc/device-tree/chosen/bootloader/partition
+BOOTPART=$(printf "%d" "0x$(od "${DT_BOOTLOADER_PARTITION}" -v -An -t x1 | tr -d ' ' )")
+mount /dev/mmcblk0p$((BOOTPART+3)) /mnt
+switch_root /mnt /sbin/init
