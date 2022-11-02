@@ -9,6 +9,8 @@ fixup_file=fixup4.dat
 
 kernel=Image
 
+uart_2ndstage=1
+
 # To use an external initramfs file
 #initramfs rootfs.cpio.gz
 
