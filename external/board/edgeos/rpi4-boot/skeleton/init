@@ -1,6 +1,28 @@
 #!/bin/sh
+set -e
+
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+
+sleep 1
 
 DT_BOOTLOADER_PARTITION=/proc/device-tree/chosen/bootloader/partition
 BOOTPART=$(printf "%d" "0x$(od "${DT_BOOTLOADER_PARTITION}" -v -An -t x1 | tr -d ' ' )")
+
 mount /dev/mmcblk0p$((BOOTPART+3)) /mnt
-switch_root /mnt /sbin/init
+
+cat << "EOF"
+
+  ______    _             ____   _____ 
+ |  ____|  | |           / __ \ / ____|
+ | |__   __| | __ _  ___| |  | | (___  
+ |  __| / _` |/ _` |/ _ \ |  | |\___ \ 
+ | |___| (_| | (_| |  __/ |__| |____) |
+ |______\__,_|\__, |\___|\____/|_____/ 
+               __/ |                   
+              |___/                    
+
+EOF
+
+exec switch_root /mnt /sbin/init

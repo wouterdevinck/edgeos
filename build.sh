@@ -57,14 +57,17 @@ case $1 in
   make O=$OUTDIR_RPI4_ROOT BR2_EXTERNAL=$EXTDIR $CONFIG_RPI4_ROOT
   make O=$OUTDIR_RPI4_ROOT
 
-  # Build SD card image
+  # Copy artifacts
+  cp $OUTDIR_RPI4_BOOT/images/autoboot.vfat $OUTDIR
+  cp $OUTDIR_RPI4_BOOT/images/boot.vfat $OUTDIR
+  cp $OUTDIR_RPI4_ROOT/images/rootfs.ext4 $OUTDIR
   cd $OUTDIR
-  cp $OUTDIR_RPI4_BOOT/images/autoboot.vfat .
-  cp $OUTDIR_RPI4_BOOT/images/boot.vfat .
-  cp $OUTDIR_RPI4_ROOT/images/rootfs.ext4 .
 
-  # TODO - this is not made to be run from here
-  PATH=$PATH:$OUTDIR_RPI4_ROOT/host/bin $WORKDIR/support/scripts/genimage.sh -c $EXTDIR/board/edgeos/rpi4-sdcard-genimage.cfg
+  # Tar artifacts
+  tar -czvf edgeos.tar.gz autoboot.vfat boot.vfat rootfs.ext4
+
+  # Build SD card image
+  PATH=$PATH:$OUTDIR_RPI4_ROOT/host/bin BUILD_DIR=$OUTDIR fakeroot $WORKDIR/support/scripts/genimage.sh -c $EXTDIR/board/edgeos/rpi4-sdcard-genimage.cfg
 
   ;;
 
