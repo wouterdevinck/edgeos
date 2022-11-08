@@ -14,9 +14,7 @@ gpu_mem_512=100
 gpu_mem_1024=100
 
 dtoverlay=miniuart-bt
-dtoverlay=krnbt=on
-dtoverlay=vc4-kms-v3d-pi4
-dtoverlay=imx219
+dtparam=krnbt=on
 
 arm_64bit=1
 
