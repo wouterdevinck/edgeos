@@ -5,6 +5,10 @@ mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t devtmpfs devtmpfs /dev
 
+exec 0</dev/console
+exec 1>/dev/console
+exec 2>/dev/console
+
 sleep 1
 
 DT_BOOTLOADER_PARTITION=/proc/device-tree/chosen/bootloader/partition
@@ -25,4 +29,8 @@ cat << "EOF"
 
 EOF
 
-exec switch_root /mnt /sbin/init
+mount --move /sys /mnt/sys
+mount --move /proc /mnt/proc
+mount --move /dev /mnt/dev
+
+exec switch_root -c /dev/console /mnt /sbin/init
