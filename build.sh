@@ -12,6 +12,11 @@ WORKDIR="$SCRIPT_DIR/buildroot"
 EXTDIR="$SCRIPT_DIR/external"
 PATCHDIR="$SCRIPT_DIR/patches"
 OUTDIR="$SCRIPT_DIR/output"
+ARTDIR="$OUTDIR/artifacts"
+
+EDGEOS_VERSION=$(git describe --tags --dirty)
+
+DOCKERFILE="$SCRIPT_DIR/docker/Dockerfile-edgeos"
 
 CONFPATH_RPI4_TOOLCHAIN="$EXTDIR/configs/$CONFIG_RPI4_TOOLCHAIN"
 CONFPATH_RPI4_BOOT="$EXTDIR/configs/$CONFIG_RPI4_BOOT"
@@ -78,6 +83,8 @@ case $1 in
 
 "build")
 
+  echo "Building EdgeOS version $EDGEOS_VERSION"
+
   # Build FAT boot partition - containing firmware (& config), kernel and initramfs
   build $OUTDIR_RPI4_BOOT $CONFIG_RPI4_BOOT
 
@@ -85,13 +92,18 @@ case $1 in
   build $OUTDIR_RPI4_ROOT $CONFIG_RPI4_ROOT
 
   # Copy artifacts
-  cp $OUTDIR_RPI4_BOOT/images/autoboot.vfat $OUTDIR
-  cp $OUTDIR_RPI4_BOOT/images/boot.vfat $OUTDIR
-  cp $OUTDIR_RPI4_ROOT/images/rootfs.ext4 $OUTDIR
-  cd $OUTDIR
+  rm -rf $ARTDIR
+  mkdir $ARTDIR
+  cp $OUTDIR_RPI4_BOOT/images/autoboot.vfat $ARTDIR
+  cp $OUTDIR_RPI4_BOOT/images/boot.vfat $ARTDIR
+  cp $OUTDIR_RPI4_ROOT/images/rootfs.ext4 $ARTDIR
+  cd $ARTDIR
 
   # Tar artifacts
   tar -czvf edgeos.tar.gz autoboot.vfat boot.vfat rootfs.ext4
+
+  # Build Docker image
+  docker build -t $EDGEOS_VERSION -f $DOCKERFILE .
 
   # Build SD card image
   PATH=$PATH:$OUTDIR_RPI4_ROOT/host/bin BUILD_DIR=$OUTDIR fakeroot $WORKDIR/support/scripts/genimage.sh -c $EXTDIR/board/edgeos/rpi4-sdcard-genimage.cfg
