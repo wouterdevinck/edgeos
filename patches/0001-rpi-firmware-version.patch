@@ -1,0 +1,10 @@
+--- package/rpi-firmware/rpi-firmware.mk
++++ package/rpi-firmware/rpi-firmware.mk
+@@ -7,1 +7,1@@
+-RPI_FIRMWARE_VERSION = 3f20b832b27cd730deb6419b570f31a98167eef6
++RPI_FIRMWARE_VERSION = 42e091c8e7edb79b5a6b493daaea2485d621d9e5
+
+--- package/rpi-firmware/rpi-firmware.hash
++++ package/rpi-firmware/rpi-firmware.hash
+@@ -1,0 +1,1@@
++sha256  49c2d9216707ca4d1cf1a7b633067cf5e4c7e68929a822cd6d26d40d0569b780  rpi-firmware-42e091c8e7edb79b5a6b493daaea2485d621d9e5.tar.gz

@@ -9,6 +9,7 @@ CONFIG_RPI4_ROOT=edgeos_rpi4_root_defconfig
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 WORKDIR="$SCRIPT_DIR/buildroot"
 EXTDIR="$SCRIPT_DIR/external"
+PATCHDIR="$SCRIPT_DIR/patches"
 OUTDIR="$SCRIPT_DIR/output"
 
 CONFPATH_RPI4_BOOT="$EXTDIR/configs/$CONFIG_RPI4_BOOT"
@@ -20,11 +21,21 @@ OUTDIR_RPI4_ROOT="$OUTDIR/rpi4-root"
 case $1 in
 
 "prepare")
+
+  # Create directory for Buildroot
   rm -rf $WORKDIR
   mkdir -p $WORKDIR
+
+  # Download and unpack Buildroot
   wget "https://buildroot.org/downloads/buildroot-$BR_VERSION.tar.gz"
   tar -xzf buildroot-$BR_VERSION.tar.gz -C $WORKDIR --strip-components 1
   rm buildroot-$BR_VERSION.tar.gz
+
+  # Apply pathes to Buildroot
+  for patch in $PATCHDIR/*; do
+    patch -d $WORKDIR -p0 < $patch
+  done
+
   ;;
 
 "build"|"menuconfig-rpi4-boot"|"menuconfig-rpi4-root")
