@@ -1,0 +1,9 @@
+{
+  "app": {
+    "name": "Example",
+    "version": "1.0.0"
+  },
+  "edgeos": {
+    "version": "1.0.0"
+  }
+}
