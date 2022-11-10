@@ -3,6 +3,9 @@
 set -u
 set -e
 
+# Version number
+install -D -m 0644 edgeos-version ${TARGET_DIR}/etc/edgeos-version
+
 # Mount FAT partitions
 if [ -e ${TARGET_DIR}/etc/fstab ]; then
     mkdir -p ${TARGET_DIR}/boot/autoboot

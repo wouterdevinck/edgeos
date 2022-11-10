@@ -7,7 +7,7 @@ INSTALL_SCRIPT_FILE="install.sh"
 MANIFEST_FILE="manifest.json"
 DOCKER_COMPOSE_FILE="docker-compose.yml"
 
-source read-manifest.sh $MANIFEST_FILE
+source read-manifest $MANIFEST_FILE
 
 PACKAGENAME="$APP_NAME-$APP_VERSION.upg"
 

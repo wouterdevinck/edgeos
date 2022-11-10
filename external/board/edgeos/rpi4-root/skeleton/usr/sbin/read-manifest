@@ -13,6 +13,6 @@ if ! [ -e "$1" ]; then
   exit 1
 fi
 
-APP_NAME=$(jq -r .app.name $MANIFEST_FILE)
-APP_VERSION=$(jq -r .app.version $MANIFEST_FILE)
-EOS_VERSION=$(jq -r .edgeos.version $MANIFEST_FILE)
+APP_NAME=$(jq -r .app.name $1)
+APP_VERSION=$(jq -r .app.version $1)
+EDGEOS_VERSION=$(jq -r .edgeos.version $1)

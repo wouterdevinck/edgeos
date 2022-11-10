@@ -31,10 +31,10 @@ if ! [ -e "$INSTALL_SCRIPT_FILE" ]; then
   exit 1
 fi
 
-source read-manifest.sh $MANIFEST_FILE
+source read-manifest $MANIFEST_FILE
 
 echo "Running install script from package $APP_NAME version $APP_VERSION"
 
-$INSTALL_SCRIPT_FILE
+$INSTALL_SCRIPT_FILE $TMPDIR
 
 rm -rf $TMPDIR

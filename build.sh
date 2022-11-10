@@ -85,6 +85,9 @@ case $1 in
 
   echo "Building EdgeOS version $EDGEOS_VERSION"
 
+  # Write version number to file
+  echo "$EDGEOS_VERSION" > $WORKDIR/edgeos-version
+
   # Build FAT boot partition - containing firmware (& config), kernel and initramfs
   build $OUTDIR_RPI4_BOOT $CONFIG_RPI4_BOOT
 

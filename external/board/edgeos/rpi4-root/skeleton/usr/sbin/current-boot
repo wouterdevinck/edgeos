@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+DT_BOOTLOADER_PARTITION=/proc/device-tree/chosen/bootloader/partition
+DT_BOOTLOADER_TRYBOOT=/proc/device-tree/chosen/bootloader/tryboot
+
+A_BOOT_PART="2"
+B_BOOT_PART="3"
+A_ROOTFS_PART="mmcblk0p5"
+B_ROOTFS_PART="mmcblk0p6"
+
+CURRENT_ROOTFS_PART=$(eval $(lsblk -o MOUNTPOINT,NAME -P | grep 'MOUNTPOINT="/"'); echo $NAME)
+CURRENT_BOOTPART=$(printf "%d" "0x$(od "${DT_BOOTLOADER_PARTITION}" -v -An -t x1 | tr -d ' ' )")
+
+TRYBOOT=$(printf "%d" "0x$(od "${DT_BOOTLOADER_TRYBOOT}" -v -An -t x1 | tr -d ' ' )")
+
+if [ $CURRENT_ROOTFS_PART = $A_ROOTFS_PART ] && [ $CURRENT_BOOTPART = $A_BOOT_PART ]; then
+  CURRENT_BOOT="A"
+elif [ $CURRENT_ROOTFS_PART = $B_ROOTFS_PART ] && [ $CURRENT_BOOTPART = $B_BOOT_PART ]; then
+  CURRENT_BOOT="B"
+else
+  echo "ERROR"
+  exit 1
+fi
+
+CURRENT_EDGEOS_VERSION=$(cat /etc/edgeos-version)
+
+echo "Booted from $CURRENT_BOOT"
+echo "EdgeOS version $CURRENT_EDGEOS_VERSION"
+if [ "$TRYBOOT" == "1" ]; then
+    echo "Upgrade in progress!"
+fi
