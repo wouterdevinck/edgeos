@@ -3,7 +3,7 @@
 set -e
 set -o pipefail
 
-INSTALL_SCRIPT_FILE="install.sh"
+INSTALL_SCRIPT_FILE="/usr/sbin/install"
 MANIFEST_FILE="manifest.json"
 DOCKER_COMPOSE_FILE="docker-compose.yml"
 
@@ -13,4 +13,4 @@ PACKAGENAME="$APP_NAME-$APP_VERSION.upg"
 
 echo "Creating upgrade package $PACKAGENAME"
 
-tar -czvf $PACKAGENAME $INSTALL_SCRIPT_FILE $MANIFEST_FILE $DOCKER_COMPOSE_FILE
+tar -czvf $PACKAGENAME --transform 's/.*\///g' $INSTALL_SCRIPT_FILE $MANIFEST_FILE $DOCKER_COMPOSE_FILE > /dev/null 2>&1

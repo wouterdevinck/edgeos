@@ -1,0 +1,4 @@
+*
+!bundler/*
+bundler/manifest.json
+!external/board/edgeos/rpi4-root/skeleton/usr/sbin/read-manifest

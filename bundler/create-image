@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+MANIFEST_FILE="manifest.json"
+DOCKER_COMPOSE_FILE="docker-compose.yml"
+
+source read-manifest $MANIFEST_FILE
+
+echo "Creating SD card image for $APP_NAME version $APP_VERSION"
+
+# todo
+# download edgeos tarbal
+# include manifest and compose somewhere?
+# run genimage

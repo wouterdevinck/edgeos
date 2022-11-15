@@ -5,7 +5,7 @@ set -o pipefail
 
 TMPDIR=tmp
 MANIFEST_FILE="$TMPDIR/manifest.json"
-INSTALL_SCRIPT_FILE="$TMPDIR/install.sh"
+INSTALL_SCRIPT_FILE="$TMPDIR/install"
 
 if [ "$#" -ne 1 ]; then
   echo "Usage: $0 *.upg" >&2

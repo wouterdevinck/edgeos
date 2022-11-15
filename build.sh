@@ -16,7 +16,11 @@ ARTDIR="$OUTDIR/artifacts"
 
 EDGEOS_VERSION=$(git describe --tags --dirty)
 
-DOCKERFILE="$SCRIPT_DIR/docker/Dockerfile-edgeos"
+DOCKERFILE_OS="$SCRIPT_DIR/docker/Dockerfile-edgeos"
+DOCKERFILE_BUNDLER="$SCRIPT_DIR/docker/Dockerfile-bundler"
+
+DOCKER_TAG_OS="wouterdevinck/edgeos:$EDGEOS_VERSION"
+DOCKER_TAG_BUNDLER="wouterdevinck/edgeos-bundler:$EDGEOS_VERSION"
 
 CONFPATH_RPI4_TOOLCHAIN="$EXTDIR/configs/$CONFIG_RPI4_TOOLCHAIN"
 CONFPATH_RPI4_BOOT="$EXTDIR/configs/$CONFIG_RPI4_BOOT"
@@ -105,10 +109,12 @@ case $1 in
   # Tar artifacts
   tar -czvf edgeos.tar.gz autoboot.vfat boot.vfat rootfs.ext4
 
-  # Build Docker image
-  docker build -t $EDGEOS_VERSION -f $DOCKERFILE .
+  # Build Docker images
+  docker buildx build --load -t $DOCKER_TAG_OS -f $DOCKERFILE_OS .
+  docker buildx build --load -t $DOCKER_TAG_BUNDLER -f $DOCKERFILE_BUNDLER .
 
   # Build SD card image
+  # TODO remove
   PATH=$PATH:$OUTDIR_RPI4_ROOT/host/bin BUILD_DIR=$OUTDIR fakeroot $WORKDIR/support/scripts/genimage.sh -c $EXTDIR/board/edgeos/rpi4-sdcard-genimage.cfg
 
   ;;
