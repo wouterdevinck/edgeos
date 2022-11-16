@@ -119,6 +119,11 @@ case $1 in
 
   ;;
 
+"push")
+  docker push $DOCKER_TAG_OS
+  docker push $DOCKER_TAG_BUNDLER
+  ;;
+
 "clean")
   rm -rf $WORKDIR $OUTDIR
   ;;

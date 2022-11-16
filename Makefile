@@ -24,6 +24,10 @@ toolchain:
 build:
 	./build.sh build
 
+.PHONY: push
+push:
+	./build.sh push
+
 .PHONY: clean
 clean:
 	./build.sh clean
