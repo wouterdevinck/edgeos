@@ -110,8 +110,8 @@ case $1 in
   tar -czvf edgeos.tar.gz autoboot.vfat boot.vfat rootfs.ext4
 
   # Build Docker images
-  docker buildx build --load -t $DOCKER_TAG_OS -f $DOCKERFILE_OS .
-  docker buildx build --load -t $DOCKER_TAG_BUNDLER -f $DOCKERFILE_BUNDLER .
+  docker buildx build --load -t $DOCKER_TAG_OS -f $DOCKERFILE_OS $ARTDIR
+  docker buildx build --load -t $DOCKER_TAG_BUNDLER -f $DOCKERFILE_BUNDLER $SCRIPT_DIR
 
   # Build SD card image
   # TODO remove
