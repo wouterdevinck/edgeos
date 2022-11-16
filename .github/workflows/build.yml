@@ -31,3 +31,9 @@ jobs:
 
     - name: Push the Docker image
       run: make push
+
+    - name: Store the tarbal artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: edgeos
+        path: output/artifacts/edgeos.tar.gz

@@ -1,0 +1,30 @@
+name: Releases
+
+on: 
+  push:
+    tags: [ "*" ]
+
+jobs:
+
+  release:
+
+    runs-on: ubuntu-22.04
+
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Install dependencies
+      run: make prepare
+    
+    - name: Build
+      run: make
+
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: output/artifacts/edgeos.tar.gz
+        omitBody: true
