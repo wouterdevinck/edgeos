@@ -5,12 +5,47 @@ set -o pipefail
 
 MANIFEST_FILE="manifest.json"
 DOCKER_COMPOSE_FILE="docker-compose.yml"
+RELEASE_URL="https://github.com/wouterdevinck/edgeos/releases/download"
+OS_TARBAL="edgeos.tar.gz"
+IMAGE_NAME="sdcard.img"
+IMAGE_NAME_COMPRESSED="sdcard.img.gz"
+WORKDIR="tmp"
 
+# Read manifest file
 source read-manifest $MANIFEST_FILE
 
+# Info message
 echo "Creating SD card image for $APP_NAME version $APP_VERSION"
 
-# todo
-# download edgeos tarbal
-# include manifest and compose somewhere?
-# run genimage
+# TODO: Check if bundler version is same as os version and warn otherwise
+
+# Create working directory
+mkdir -p $WORKDIR
+pushd $WORKDIR > /dev/null
+
+# Download EdgeOS release, containing boot partitions and rootfs image
+echo "  Downloading EdgeOS version $EDGEOS_VERSION"
+OS_DOWNLOAD="$RELEASE_URL/$EDGEOS_VERSION/$OS_TARBAL"
+curl $OS_DOWNLOAD -s -L -o $OS_TARBAL
+
+# Unpack release tarbal
+echo "  Unpacking EdgeOS tarbal"
+tar -xf $OS_TARBAL > /dev/null
+
+# TODO: Include manifest and compose somewhere
+
+# Run genimage
+echo "  Creating image"
+BUILD_DIR=$(pwd) fakeroot genimage.sh -c /data/rpi4-sdcard-genimage.cfg > /dev/null 2>&1
+
+# Compress image
+echo "  Compressing image"
+gzip $IMAGE_NAME $IMAGE_NAME_COMPRESSED > /dev/null 2>&1
+
+# Copy output
+popd > /dev/null
+cp $WORKDIR/$IMAGE_NAME_COMPRESSED .
+
+# Clean up
+rm -rf $WORKDIR
+echo "  Done."

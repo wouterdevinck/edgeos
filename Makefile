@@ -24,6 +24,10 @@ toolchain:
 build:
 	./build.sh build
 
+.PHONY: bundler
+bundler:
+	./build.sh bundler
+
 .PHONY: push
 push:
 	./build.sh push

@@ -1,3 +1,5 @@
 buildroot
 output
 *.upg
+*.img
+*.img.gz

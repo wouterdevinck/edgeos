@@ -1,14 +1,31 @@
 FROM ubuntu:22.04
+
+# Dependencies
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
         dumb-init \
-        jq && \
+        jq \
+        curl \
+        fakeroot && \
     apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-COPY bundler/* /usr/sbin/
+
+# Scripts
+COPY bundler/create-image /usr/sbin/
+COPY bundler/create-upgrade /usr/sbin/
 COPY external/board/edgeos/rpi4-root/skeleton/usr/sbin/read-manifest /usr/sbin/
+
+# Genimage
+COPY output/rpi4-boot/host/lib/libconfuse.so.2.1.0 /usr/lib/libconfuse.so.2
+COPY output/rpi4-boot/host/bin/genimage /usr/sbin/
+COPY buildroot/support/scripts/genimage.sh /usr/sbin/
+
+# Supporting data
+COPY bundler/install /data/
+COPY external/board/edgeos/rpi4-sdcard-genimage.cfg /data/
+
 WORKDIR /workdir
 ENTRYPOINT ["dumb-init"]

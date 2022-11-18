@@ -12,6 +12,7 @@ WORKDIR="$SCRIPT_DIR/buildroot"
 EXTDIR="$SCRIPT_DIR/external"
 PATCHDIR="$SCRIPT_DIR/patches"
 OUTDIR="$SCRIPT_DIR/output"
+EXAMPLEDIR="$SCRIPT_DIR/bundler/example"
 ARTDIR="$OUTDIR/artifacts"
 
 EDGEOS_VERSION=$(git describe --tags --dirty)
@@ -116,6 +117,20 @@ case $1 in
   # Build SD card image
   # TODO remove
   PATH=$PATH:$OUTDIR_RPI4_ROOT/host/bin BUILD_DIR=$OUTDIR fakeroot $WORKDIR/support/scripts/genimage.sh -c $EXTDIR/board/edgeos/rpi4-sdcard-genimage.cfg
+
+  ;;
+
+"bundler")
+
+  # Build bundler and run on example
+
+  docker buildx build --load -t $DOCKER_TAG_BUNDLER -f $DOCKERFILE_BUNDLER $SCRIPT_DIR
+  
+  BUNDLER_ARGS="-v $EXAMPLEDIR:/workdir -u $(id -u $USER):$(id -g $USER)"
+  BUNDLER="docker run --rm $BUNDLER_ARGS $DOCKER_TAG_BUNDLER"
+
+  $BUNDLER create-upgrade
+  $BUNDLER create-image
 
   ;;
 
