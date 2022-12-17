@@ -13,6 +13,6 @@ PACKAGENAME="$APP_NAME-$APP_VERSION.upg"
 
 echo "Creating upgrade package $PACKAGENAME"
 
-tar -czvf $PACKAGENAME --transform 's/.*\///g' $INSTALL_SCRIPT_FILE $MANIFEST_FILE $DOCKER_COMPOSE_FILE > /dev/null 2>&1
+tar -cf $PACKAGENAME --transform 's/.*\///g' $INSTALL_SCRIPT_FILE $MANIFEST_FILE $DOCKER_COMPOSE_FILE > /dev/null 2>&1
 
 echo "  Done."
