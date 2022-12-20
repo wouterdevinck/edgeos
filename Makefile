@@ -1,5 +1,9 @@
 all: build
 
+.PHONY: version
+version:
+	./build.sh version
+
 .PHONY: prepare
 prepare:
 	./build.sh prepare

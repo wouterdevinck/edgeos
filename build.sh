@@ -44,6 +44,10 @@ build () {
 
 case $1 in
 
+"version")
+  echo $EDGEOS_VERSION
+  ;;
+
 "prepare")
 
   # Create directory for Buildroot
@@ -122,7 +126,7 @@ case $1 in
 
   docker buildx build --load -t $DOCKER_TAG_BUNDLER -f $DOCKERFILE_BUNDLER $SCRIPT_DIR
   
-  BUNDLER_ARGS="-v $EXAMPLEDIR:/workdir -u $(id -u $USER):$(id -g $USER)"
+  BUNDLER_ARGS="-v $EXAMPLEDIR:/workdir -v /var/run/docker.sock:/var/run/docker.sock -u $(id -u $USER):$(getent group docker | cut -d: -f3)"
   BUNDLER="docker run --rm $BUNDLER_ARGS $DOCKER_TAG_BUNDLER"
 
   $BUNDLER create-upgrade
