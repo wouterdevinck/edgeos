@@ -29,7 +29,7 @@ source read-manifest $1/manifest.json
 
 if ! [ "$EDGEOS_VERSION" == "$CURRENT_EDGEOS_VERSION" ]; then
     echo "Upgrading EdgeOS from version $CURRENT_EDGEOS_VERSION to $EDGEOS_VERSION"
-    # TODO Download and write EdgeOS
+    $1/get-os $EDGEOS_VERSION
 else
     echo "EdgeOS version $CURRENT_EDGEOS_VERSION is up to date"
 fi

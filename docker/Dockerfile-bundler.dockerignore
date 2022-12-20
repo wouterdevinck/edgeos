@@ -1,6 +1,7 @@
 *
 !bundler/create-image
 !bundler/create-upgrade
+!bundler/get-os
 !bundler/install
 !external/board/edgeos/rpi4-root/skeleton/usr/sbin/read-manifest
 !external/board/edgeos/rpi4-sdcard-genimage.cfg

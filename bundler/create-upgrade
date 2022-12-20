@@ -6,6 +6,7 @@ set -o pipefail
 MANIFEST_FILE="manifest.json"
 DOCKER_COMPOSE_FILE="docker-compose.yml"
 INSTALL_SCRIPT_FILE="/data/install"
+GET_OS_SCRIPT_FILE="/usr/sbin/get-os"
 
 source read-manifest $MANIFEST_FILE
 
@@ -13,6 +14,11 @@ PACKAGENAME="$APP_NAME-$APP_VERSION.upg"
 
 echo "Creating upgrade package $PACKAGENAME"
 
-tar -cf $PACKAGENAME --transform 's/.*\///g' $INSTALL_SCRIPT_FILE $MANIFEST_FILE $DOCKER_COMPOSE_FILE > /dev/null 2>&1
+tar -cf $PACKAGENAME --transform 's/.*\///g' \
+  $INSTALL_SCRIPT_FILE \
+  $GET_OS_SCRIPT_FILE \
+  $MANIFEST_FILE \
+  $DOCKER_COMPOSE_FILE \
+  > /dev/null 2>&1
 
 echo "  Done."

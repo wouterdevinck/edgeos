@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+OS_RELEASE_URL="https://github.com/wouterdevinck/edgeos/releases/download"
+OS_TAG="wouterdevinck/edgeos"
+OS_TARBAL="edgeos.tar.gz"
+
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 version" >&2
+  exit 1
+fi
+
+EDGEOS_VERSION=$1
+
+# Download EdgeOS release, containing boot partitions and rootfs image
+echo "  Downloading EdgeOS version $EDGEOS_VERSION"
+OS_DOWNLOAD="$OS_RELEASE_URL/$EDGEOS_VERSION/$OS_TARBAL"
+HTTP_CODE=$(curl $OS_DOWNLOAD -s -L -o $OS_TARBAL -w "%{http_code}")
+
+# If download fails, attempt getting EdgeOS from Docker instead
+# This is useful for testing with unreleased versions or local builds
+if [[ ${HTTP_CODE} -eq 404 ]]; then
+  echo "    Release not found, attempting to get EdgeOS $EDGEOS_VERSION from Docker instead"
+  CID=$(docker create $OS_TAG:$EDGEOS_VERSION nop)
+  docker cp $CID:$OS_TARBAL $OS_TARBAL
+  docker rm $CID > /dev/null 2>&1
+fi
+
+# Unpack release tarbal
+echo "  Unpacking EdgeOS tarbal"
+tar -xf $OS_TARBAL > /dev/null
