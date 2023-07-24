@@ -72,6 +72,12 @@ case $1 in
     exit 2
   fi
   cd $WORKDIR
+  
+  # If running under WSL, locally fix the path. Buildroot doesn't like spaces on the path.
+  if [[ $(grep -i Microsoft /proc/version) ]]; then 
+    PATH=$(echo $PATH | tr ':' '\n' | grep -v /mnt/ | tr '\n' ':' | head -c -1)
+  fi
+  
   ;;&
 
 "menuconfig-rpi4-toolchain")
