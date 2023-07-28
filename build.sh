@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-BR_VERSION=2022.08.1
+BR_VERSION=2023.05.1
 
 CONFIG_RPI4_TOOLCHAIN=edgeos_rpi4_toolchain_defconfig
 CONFIG_RPI4_BOOT=edgeos_rpi4_boot_defconfig
@@ -59,7 +59,7 @@ case $1 in
   tar -xzf buildroot-$BR_VERSION.tar.gz -C $WORKDIR --strip-components 1
   rm buildroot-$BR_VERSION.tar.gz
 
-  # Apply pathes to Buildroot
+  # Apply patches to Buildroot
   for patch in $PATCHDIR/*; do
     patch -d $WORKDIR -p0 < $patch
   done
@@ -93,7 +93,7 @@ case $1 in
   ;;
 
 "toolchain")
-  build $OUTDIR_RPI4_TOOLCHAIN $CONFPATH_RPI4_TOOLCHAIN sdk
+  build $OUTDIR_RPI4_TOOLCHAIN $CONFIG_RPI4_TOOLCHAIN sdk
   ;;
 
 "build")
@@ -122,16 +122,20 @@ case $1 in
 
   # Build Docker images
   docker buildx build --load -t $DOCKER_TAG_OS -f $DOCKERFILE_OS $ARTDIR
+
+  ;;&
+
+"build"|"bundler")
+
+  # Build bundler Docker image
   docker buildx build --load -t $DOCKER_TAG_BUNDLER -f $DOCKERFILE_BUNDLER $SCRIPT_DIR
 
   ;;
 
-"bundler")
+"bundle")
 
-  # Build bundler and run on example
+  # Run bundler on example
 
-  docker buildx build --load -t $DOCKER_TAG_BUNDLER -f $DOCKERFILE_BUNDLER $SCRIPT_DIR
-  
   BUNDLER_ARGS="-v $EXAMPLEDIR:/workdir -v /var/run/docker.sock:/var/run/docker.sock -u $(id -u $USER):$(getent group docker | cut -d: -f3)"
   BUNDLER="docker run --rm $BUNDLER_ARGS $DOCKER_TAG_BUNDLER"
 

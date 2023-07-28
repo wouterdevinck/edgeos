@@ -32,6 +32,10 @@ build:
 bundler:
 	./build.sh bundler
 
+.PHONY: bundle
+bundle:
+	./build.sh bundle
+
 .PHONY: push
 push:
 	./build.sh push

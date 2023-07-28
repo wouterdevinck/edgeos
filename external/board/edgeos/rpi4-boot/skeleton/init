@@ -5,6 +5,11 @@ mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t devtmpfs devtmpfs /dev
 
+fail_shell() {
+  echo "$@"
+  exec sh
+}
+
 exec 0</dev/console
 exec 1>/dev/console
 exec 2>/dev/console
@@ -14,7 +19,9 @@ sleep 1
 DT_BOOTLOADER_PARTITION=/proc/device-tree/chosen/bootloader/partition
 BOOTPART=$(printf "%d" "0x$(od "${DT_BOOTLOADER_PARTITION}" -v -An -t x1 | tr -d ' ' )")
 
-mount /dev/mmcblk0p$((BOOTPART+3)) /mnt
+if ! mount /dev/mmcblk0p$((BOOTPART+3)) /mnt; then
+  fail_shell "Failed to mount rootfs, dropping to a shell"
+fi
 
 cat << "EOF"
 

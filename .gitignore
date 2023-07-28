@@ -3,3 +3,5 @@ output
 *.upg
 *.img
 *.img.gz
+tmp
+notes.txt
