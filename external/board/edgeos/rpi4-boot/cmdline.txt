@@ -1,1 +1,1 @@
-root=/dev/ram0 rootwait console=tty1 console=ttyAMA0,115200 panic=10
+root=/dev/ram0 rootwait console=tty1 console=ttyAMA0,115200 panic=10 usb-storage.quirks=152D:0583:u

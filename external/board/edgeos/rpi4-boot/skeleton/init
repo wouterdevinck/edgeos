@@ -14,14 +14,42 @@ exec 0</dev/console
 exec 1>/dev/console
 exec 2>/dev/console
 
-sleep 1
+# TODO hide findfs errors
+
+for i in $(seq 20); do
+  AUTOBOOTDEV="$(findfs LABEL=AUTOBOOT || true)"
+  if [ -b "$AUTOBOOTDEV" ]; then
+    break
+  fi
+  sleep 1
+done
 
 DT_BOOTLOADER_PARTITION=/proc/device-tree/chosen/bootloader/partition
 BOOTPART=$(printf "%d" "0x$(od "${DT_BOOTLOADER_PARTITION}" -v -An -t x1 | tr -d ' ' )")
+DEV=$(echo $AUTOBOOTDEV | sed 's/.$//')
+BOOTADEV="${DEV}2"
+BOOTBDEV="${DEV}3"
+ROOTFSDEV="$DEV$((BOOTPART+3))"
 
-if ! mount /dev/mmcblk0p$((BOOTPART+3)) /mnt; then
+if ! mount $ROOTFSDEV /mnt; then
   fail_shell "Failed to mount rootfs, dropping to a shell"
 fi
+
+# TODO options -o defaults,noatime
+
+if ! mount $AUTOBOOTDEV /mnt/boot/autoboot; then
+  fail_shell "Failed to mount AUTOBOOT, dropping to a shell"
+fi
+
+if ! mount $BOOTADEV /mnt/boot/boot_a; then
+  fail_shell "Failed to mount BOOT_A, dropping to a shell"
+fi
+
+if ! mount $BOOTBDEV /mnt/boot/boot_b; then
+  fail_shell "Failed to mount BOOT_B, dropping to a shell"
+fi
+
+# TODO fsck, fsck.fat
 
 cat << "EOF"
 
