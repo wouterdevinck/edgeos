@@ -3,11 +3,11 @@
 set -e
 set -o pipefail
 
-MANIFEST_FILE="manifest.json"
-DOCKER_COMPOSE_FILE="docker-compose.yml"
+MANIFEST_FILE="$(pwd)/manifest.json"
+DOCKER_COMPOSE_FILE="$(pwd)/docker-compose.yml"
 
-IMAGE_NAME="sdcard.img"
-IMAGE_NAME_COMPRESSED="sdcard.img.gz"
+IMAGE_NAME="disk.img"
+IMAGE_NAME_COMPRESSED="disk.img.gz"
 
 WORKDIR="tmp"
 
@@ -17,20 +17,21 @@ source read-manifest $MANIFEST_FILE
 # Info message
 echo "Creating SD card image for $APP_NAME version $APP_VERSION"
 
-# TODO: Check if bundler version is same as os version and warn otherwise
-
 # Create working directory
+rm -rf $WORKDIR
 mkdir -p $WORKDIR
 pushd $WORKDIR > /dev/null
 
 # Get EdgeOS release, containing boot partitions and rootfs image
 get-os $EDGEOS_VERSION
 
-# TODO: Include manifest and compose somewhere
+# Create partition with manifest and compose files
+echo "  Creating manifest partition"
+mksquashfs $MANIFEST_FILE $DOCKER_COMPOSE_FILE manifest.squashfs > /dev/null 2>&1
 
 # Run genimage
 echo "  Creating image"
-BUILD_DIR=$(pwd) fakeroot genimage.sh -c /data/rpi4-sdcard-genimage.cfg > /dev/null 2>&1
+BUILD_DIR=$(pwd) fakeroot genimage.sh -c /data/rpi4-genimage.cfg > /dev/null 2>&1
 
 # Compress image
 echo "  Compressing image"

@@ -1,5 +1,9 @@
 FROM ubuntu:22.04
 
+# Bundler version
+ARG BUNDLER_VERSION
+ENV BUNDLER_VERSION ${BUNDLER_VERSION}
+
 # Dependencies
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
@@ -10,7 +14,9 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         curl \
         fakeroot \
         gnupg \
-        dirmngr && \
+        dirmngr \
+        squashfs-tools \
+        genext2fs && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
     echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
@@ -33,7 +39,7 @@ COPY buildroot/support/scripts/genimage.sh /usr/sbin/
 
 # Supporting data
 COPY bundler/install /data/
-COPY external/board/edgeos/rpi4-sdcard-genimage.cfg /data/
+COPY bundler/rpi4-genimage.cfg /data/
 
 WORKDIR /workdir
 ENTRYPOINT ["dumb-init"]

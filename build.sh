@@ -37,6 +37,10 @@ menuconfig () {
   make O=$1 BR2_DEFCONFIG=$2 savedefconfig
 }
 
+menuconfiglinux () {
+  make O=$1 BR2_EXTERNAL=$EXTDIR linux-menuconfig
+}
+
 build () {
   make O=$1 BR2_EXTERNAL=$EXTDIR $2
   make O=$1 $3
@@ -66,7 +70,7 @@ case $1 in
 
   ;;
 
-"build"|"toolchain"|"menuconfig-rpi4-toolchain"|"menuconfig-rpi4-boot"|"menuconfig-rpi4-root")
+"build"|"toolchain"|"menuconfig-rpi4-toolchain"|"menuconfig-rpi4-boot"|"menuconfig-rpi4-root"|"menuconfig-rpi4-linux")
   if [ ! -d "$WORKDIR" ]; then
     printf "\nPlease run prepare first.\n\n"
     exit 2
@@ -92,6 +96,10 @@ case $1 in
   menuconfig $OUTDIR_RPI4_ROOT $CONFPATH_RPI4_ROOT
   ;;
 
+"menuconfig-rpi4-linux")
+  menuconfiglinux $OUTDIR_RPI4_BOOT
+  ;;
+
 "toolchain")
   build $OUTDIR_RPI4_TOOLCHAIN $CONFIG_RPI4_TOOLCHAIN sdk
   ;;
@@ -114,11 +122,11 @@ case $1 in
   mkdir $ARTDIR
   cp $OUTDIR_RPI4_BOOT/images/autoboot.vfat $ARTDIR
   cp $OUTDIR_RPI4_BOOT/images/boot.vfat $ARTDIR
-  cp $OUTDIR_RPI4_ROOT/images/rootfs.ext4 $ARTDIR
+  cp $OUTDIR_RPI4_ROOT/images/rootfs.squashfs $ARTDIR
   cd $ARTDIR
 
   # Tar artifacts
-  tar -czvf edgeos.tar.gz autoboot.vfat boot.vfat rootfs.ext4
+  tar -czvf edgeos.tar.gz autoboot.vfat boot.vfat rootfs.squashfs
 
   # Build Docker images
   docker buildx build --load -t $DOCKER_TAG_OS -f $DOCKERFILE_OS $ARTDIR
@@ -128,7 +136,7 @@ case $1 in
 "build"|"bundler")
 
   # Build bundler Docker image
-  docker buildx build --load -t $DOCKER_TAG_BUNDLER -f $DOCKERFILE_BUNDLER $SCRIPT_DIR
+  docker buildx build --load -t $DOCKER_TAG_BUNDLER -f $DOCKERFILE_BUNDLER --build-arg BUNDLER_VERSION=$EDGEOS_VERSION $SCRIPT_DIR
 
   ;;
 

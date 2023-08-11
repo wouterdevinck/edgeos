@@ -12,7 +12,18 @@ if [ "$#" -ne 1 ]; then
   exit 1
 fi
 
-EDGEOS_VERSION=$1
+# Determine version to get
+if [ $1 != "local" ] ; then
+  EDGEOS_VERSION=$1
+
+  # Check if bundler version is same as os version and warn otherwise
+  if [ $EDGEOS_VERSION != $BUNDLER_VERSION ]; then
+    echo "  Warning: EdgeOS version does not match bundler version"
+  fi
+
+else
+  EDGEOS_VERSION=$BUNDLER_VERSION
+fi
 
 # Download EdgeOS release, containing boot partitions and rootfs image
 echo "  Downloading EdgeOS version $EDGEOS_VERSION"

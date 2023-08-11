@@ -1,0 +1,4 @@
+config BR2_PACKAGE_GROWPART
+        bool "growpart"
+        help
+          Helper script to grow a partition to fill the rest of the disk

@@ -1,1 +1,2 @@
 source "$BR2_EXTERNAL_EDGEOS_PATH/package/rebootp/Config.in"
+source "$BR2_EXTERNAL_EDGEOS_PATH/package/growpart/Config.in"

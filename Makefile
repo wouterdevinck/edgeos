@@ -20,6 +20,10 @@ menuconfig-rpi4-boot:
 menuconfig-rpi4-root:
 	./build.sh menuconfig-rpi4-root
 
+.PHONY: menuconfig-rpi4-linux
+menuconfig-rpi4-linux:
+	./build.sh menuconfig-rpi4-linux
+
 .PHONY: toolchain
 toolchain:
 	./build.sh toolchain

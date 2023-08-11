@@ -14,42 +14,86 @@ exec 0</dev/console
 exec 1>/dev/console
 exec 2>/dev/console
 
-# TODO hide findfs errors
-
+# Wait for the SSD or SD card to be available by searching for
+# the AUTOBOOT label on the first FAT partition.
 for i in $(seq 20); do
-  AUTOBOOTDEV="$(findfs LABEL=AUTOBOOT || true)"
+  AUTOBOOTDEV="$(findfs LABEL=AUTOBOOT 2> /dev/null || true)"
   if [ -b "$AUTOBOOTDEV" ]; then
     break
   fi
   sleep 1
 done
 
+# Deduce the name of the boot device, e.g. /dev/sda for
+# an SSD, or /dev/mmcblk0(p) for an SD card.
+PREFIX=$(echo $AUTOBOOTDEV | sed 's/.$//')
+DEV=$(echo $PREFIX | sed 's/p$//')
+
+# Find out from the EEPROM bootloader whether we are booted
+# from BOOT_A (FAT partition 2) or from BOOT_B (FAT partition 3).
 DT_BOOTLOADER_PARTITION=/proc/device-tree/chosen/bootloader/partition
 BOOTPART=$(printf "%d" "0x$(od "${DT_BOOTLOADER_PARTITION}" -v -An -t x1 | tr -d ' ' )")
-DEV=$(echo $AUTOBOOTDEV | sed 's/.$//')
-BOOTADEV="${DEV}2"
-BOOTBDEV="${DEV}3"
-ROOTFSDEV="$DEV$((BOOTPART+3))"
 
+# Calculate the names of all relevant partitions.
+BOOTDEV="$PREFIX$BOOTPART"
+ROOTFSDEV="$PREFIX$((BOOTPART+3))"
+MANIFESTDEV="$PREFIX$((BOOTPART+5))"
+CONFIGDEV="${PREFIX}9"
+LOGSDEV="${PREFIX}10"
+DOCKERDEV="${PREFIX}11"
+
+# Attempt to resize DOCKER partition to fill the rest of the disk.
+if growpart $DEV 4 > /dev/null 2>&1; then
+  if ! growpart $DEV 11 > /dev/null 2>&1; then
+    fail_shell "Failed to grow the DOCKER partition, dropping to a shell"
+  fi
+  partprobe $DEV > /dev/null 2>&1
+  if ! resize2fs $DOCKERDEV > /dev/null 2>&1; then
+    fail_shell "Failed to resize DOCKER file system, dropping to a shell"
+  fi
+fi
+
+# Check & repair file systems.
+fsck -p $AUTOBOOTDEV > /dev/null 2>&1 || true
+fsck -p $BOOTDEV > /dev/null 2>&1 || true
+fsck -p $CONFIGDEV > /dev/null 2>&1 || true
+fsck -p $LOGSDEV > /dev/null 2>&1 || true
+fsck -p $DOCKERDEV > /dev/null 2>&1 || true
+
+# Mount the read-only SquashFS ROOT_A or ROOT_B root file system partition.
 if ! mount $ROOTFSDEV /mnt; then
   fail_shell "Failed to mount rootfs, dropping to a shell"
 fi
 
-# TODO options -o defaults,noatime
-
+# Mount the AUTOBOOT FAT file system. We need to write to this during upgrade.
 if ! mount $AUTOBOOTDEV /mnt/boot/autoboot; then
   fail_shell "Failed to mount AUTOBOOT, dropping to a shell"
 fi
 
-if ! mount $BOOTADEV /mnt/boot/boot_a; then
-  fail_shell "Failed to mount BOOT_A, dropping to a shell"
+# Mount the MANIFEST_A or MANIFEST_B read-only SquashFS partition with manifest and docker-compose file.
+if ! mount $MANIFESTDEV /mnt/boot/manifest; then
+  fail_shell "Failed to mount MANIFEST, dropping to a shell"
 fi
 
-if ! mount $BOOTBDEV /mnt/boot/boot_b; then
-  fail_shell "Failed to mount BOOT_B, dropping to a shell"
+# Mount the CONFIG ext4 partition as an overlay on /etc.
+if ! mount $CONFIGDEV /mnt/boot/config; then
+  fail_shell "Failed to mount CONFIG, dropping to a shell"
+fi
+mkdir -p /mnt/boot/config/upper
+mkdir -p /mnt/boot/config/work
+if ! mount -t overlay overlay -o lowerdir=/mnt/etc,upperdir=/mnt/boot/config/upper,workdir=/mnt/boot/config/work /mnt/etc; then
+  fail_shell "Failed to mount CONFIG overlayfs, dropping to a shell"
 fi
 
-# TODO fsck, fsck.fat
+# Mount the LOGS ext4 partition.
+if ! mount $LOGSDEV /mnt/var/log; then
+  fail_shell "Failed to mount LOGS, dropping to a shell"
+fi
+
+# Mount the DOCKER ext4 partition.
+if ! mount $DOCKERDEV /mnt/var/lib/docker; then
+  fail_shell "Failed to mount DOCKER, dropping to a shell"
+fi
 
 cat << "EOF"
 
