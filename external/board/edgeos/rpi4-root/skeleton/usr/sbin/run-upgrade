@@ -3,7 +3,7 @@
 set -e
 set -o pipefail
 
-TMPDIR=tmp
+TMPDIR=/var/lib/docker/tmp
 MANIFEST_FILE="$TMPDIR/manifest.json"
 INSTALL_SCRIPT_FILE="$TMPDIR/install"
 
@@ -34,7 +34,10 @@ fi
 source read-manifest $MANIFEST_FILE
 
 echo "Running install script from package $APP_NAME version $APP_VERSION"
-
 $INSTALL_SCRIPT_FILE $TMPDIR
 
+echo "Cleaning up"
 rm -rf $TMPDIR
+
+echo "Rebooting..."
+rebootp "0 tryboot"

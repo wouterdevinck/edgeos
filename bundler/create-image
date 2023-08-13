@@ -3,24 +3,31 @@
 set -e
 set -o pipefail
 
-MANIFEST_FILE="$(pwd)/manifest.json"
-DOCKER_COMPOSE_FILE="$(pwd)/docker-compose.yml"
-
+DOCKER_COMPOSE_FILE="docker-compose.yml"
+MANIFEST_FILE="manifest.json"
 IMAGE_NAME="disk.img"
-IMAGE_NAME_COMPRESSED="disk.img.gz"
 
 WORKDIR="tmp"
-
-# Read manifest file
-source read-manifest $MANIFEST_FILE
-
-# Info message
-echo "Creating SD card image for $APP_NAME version $APP_VERSION"
 
 # Create working directory
 rm -rf $WORKDIR
 mkdir -p $WORKDIR
+
+# Copy manifest and compose files to workdir
+cp $DOCKER_COMPOSE_FILE $WORKDIR
+cp $MANIFEST_FILE $WORKDIR
+
+# Go to workdir
 pushd $WORKDIR > /dev/null
+
+# Read/edit manifest file
+source process-manifest $MANIFEST_FILE
+
+# Name resulting file
+DISKNAME_COMPRESSED="$APP_NAME-$APP_VERSION.img.gz"
+
+# Info message
+echo "Creating disk image $DISKNAME_COMPRESSED for $APP_NAME version $APP_VERSION"
 
 # Get EdgeOS release, containing boot partitions and rootfs image
 get-os $EDGEOS_VERSION
@@ -35,11 +42,11 @@ BUILD_DIR=$(pwd) fakeroot genimage.sh -c /data/rpi4-genimage.cfg > /dev/null 2>&
 
 # Compress image
 echo "  Compressing image"
-gzip $IMAGE_NAME $IMAGE_NAME_COMPRESSED > /dev/null 2>&1
+gzip -c $IMAGE_NAME > $DISKNAME_COMPRESSED 2> /dev/null
 
 # Copy output
 popd > /dev/null
-cp $WORKDIR/$IMAGE_NAME_COMPRESSED .
+cp $WORKDIR/$DISKNAME_COMPRESSED .
 
 # Clean up
 rm -rf $WORKDIR

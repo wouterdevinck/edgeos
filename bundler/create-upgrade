@@ -3,17 +3,35 @@
 set -e
 set -o pipefail
 
-MANIFEST_FILE="manifest.json"
 DOCKER_COMPOSE_FILE="docker-compose.yml"
+MANIFEST_FILE="manifest.json"
+
 INSTALL_SCRIPT_FILE="/data/install"
 GET_OS_SCRIPT_FILE="/usr/sbin/get-os"
 
-source read-manifest $MANIFEST_FILE
+WORKDIR="tmp"
 
+# Create working directory
+rm -rf $WORKDIR
+mkdir -p $WORKDIR
+
+# Copy manifest and compose files to workdir
+cp $DOCKER_COMPOSE_FILE $WORKDIR
+cp $MANIFEST_FILE $WORKDIR
+
+# Go to workdir
+pushd $WORKDIR > /dev/null
+
+# Read/edit manifest file
+source process-manifest $MANIFEST_FILE
+
+# Name resulting file
 PACKAGENAME="$APP_NAME-$APP_VERSION.upg"
 
-echo "Creating upgrade package $PACKAGENAME"
+# Info message
+echo "Creating upgrade package $PACKAGENAME for $APP_NAME version $APP_VERSION"
 
+# Create upgrade package
 tar -cf $PACKAGENAME --transform 's/.*\///g' \
   $INSTALL_SCRIPT_FILE \
   $GET_OS_SCRIPT_FILE \
@@ -21,4 +39,10 @@ tar -cf $PACKAGENAME --transform 's/.*\///g' \
   $DOCKER_COMPOSE_FILE \
   > /dev/null 2>&1
 
+# Copy output
+popd > /dev/null
+cp $WORKDIR/$PACKAGENAME .
+
+# Clean up
+rm -rf $WORKDIR
 echo "  Done."

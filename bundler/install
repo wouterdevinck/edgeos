@@ -25,14 +25,20 @@ if [ "$TRYBOOT" == "1" ]; then
     exit 1
 fi
 
-source read-manifest $1/manifest.json
+pushd $1 > /dev/null
+
+source read-manifest manifest.json
 
 if ! [ "$EDGEOS_VERSION" == "$CURRENT_EDGEOS_VERSION" ]; then
     echo "Upgrading EdgeOS from version $CURRENT_EDGEOS_VERSION to $EDGEOS_VERSION"
-    $1/get-os $EDGEOS_VERSION
+    ./get-os $EDGEOS_VERSION
 else
     echo "EdgeOS version $CURRENT_EDGEOS_VERSION is up to date"
 fi
 
-# TODO Write manifest and compose to other partition?
-# TODO Reboot with tryboot
+# dd NEXT_BOOT_PART
+# dd NEXT_ROOTFS_PART
+# mksquashfs $MANIFEST_FILE $DOCKER_COMPOSE_FILE manifest.squashfs > /dev/null 2>&1
+# dd NEXT_MANIFEST_PART
+
+popd > /dev/null

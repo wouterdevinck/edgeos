@@ -30,6 +30,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 COPY bundler/create-image /usr/sbin/
 COPY bundler/create-upgrade /usr/sbin/
 COPY bundler/get-os /usr/sbin/
+COPY bundler/process-manifest /usr/sbin/
 COPY external/board/edgeos/rpi4-root/skeleton/usr/sbin/read-manifest /usr/sbin/
 
 # Genimage

@@ -2,6 +2,7 @@
 !bundler/create-image
 !bundler/create-upgrade
 !bundler/get-os
+!bundler/process-manifest
 !bundler/install
 !bundler/rpi4-genimage.cfg
 !external/board/edgeos/rpi4-root/skeleton/usr/sbin/read-manifest

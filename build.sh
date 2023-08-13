@@ -126,7 +126,7 @@ case $1 in
   cd $ARTDIR
 
   # Tar artifacts
-  tar -czvf edgeos.tar.gz autoboot.vfat boot.vfat rootfs.squashfs
+  tar -cf edgeos.tar.gz autoboot.vfat boot.vfat rootfs.squashfs
 
   # Build Docker images
   docker buildx build --load -t $DOCKER_TAG_OS -f $DOCKERFILE_OS $ARTDIR
