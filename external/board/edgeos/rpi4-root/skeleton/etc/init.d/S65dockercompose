@@ -1,0 +1,29 @@
+COMPOSE="/boot/manifest/docker-compose.yml"
+
+start() {
+    printf 'Starting compose'
+    docker compose -f $COMPOSE up -d
+    return "$?"
+}
+
+stop() {
+    printf 'Stopping compose'
+    docker compose -f $COMPOSE down
+    return "$?"
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+case "$1" in
+    start|stop|restart)
+        "$1";;
+    reload)
+        restart;;
+    *)
+        echo "Usage: $0 {start|stop|restart|reload}"
+        exit 1
+esac
