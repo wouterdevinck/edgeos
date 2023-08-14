@@ -3,6 +3,9 @@
 set -e
 set -o pipefail
 
+DOCKER_COMPOSE_FILE="docker-compose.yml"
+MANIFEST_FILE="manifest.json"
+
 if [ "$#" -ne 1 ]; then
   echo "Usage: $0 dir" >&2
   exit 1
@@ -27,18 +30,33 @@ fi
 
 pushd $1 > /dev/null
 
-source read-manifest manifest.json
+source read-manifest $MANIFEST_FILE
 
-if ! [ "$EDGEOS_VERSION" == "$CURRENT_EDGEOS_VERSION" ]; then
-    echo "Upgrading EdgeOS from version $CURRENT_EDGEOS_VERSION to $EDGEOS_VERSION"
-    ./get-os $EDGEOS_VERSION
-else
-    echo "EdgeOS version $CURRENT_EDGEOS_VERSION is up to date"
-fi
+# if ! [ "$EDGEOS_VERSION" == "$CURRENT_EDGEOS_VERSION" ]; then
+# 
+#     echo "Upgrading EdgeOS from version $CURRENT_EDGEOS_VERSION to $EDGEOS_VERSION"
+#     ./get-os $EDGEOS_VERSION
+# 
+# else
+#     echo "EdgeOS version $CURRENT_EDGEOS_VERSION is up to date"
+#     # TODO Also on other partition?
+# fi
 
-# dd NEXT_BOOT_PART
-# dd NEXT_ROOTFS_PART
-# mksquashfs $MANIFEST_FILE $DOCKER_COMPOSE_FILE manifest.squashfs > /dev/null 2>&1
-# dd NEXT_MANIFEST_PART
+echo "Downloading EdgeOS version $EDGEOS_VERSION"
+./get-os $EDGEOS_VERSION
+
+echo "Writing boot partition"
+dd if=$(pwd)/boot.vfat of=$NEXT_BOOT_PART
+
+echo "Writing rootfs partition"
+dd if=$(pwd)/rootfs.squashfs of=$NEXT_ROOTFS_PART
+
+echo "Creating manifest partition filesystem"
+mksquashfs $MANIFEST_FILE $DOCKER_COMPOSE_FILE manifest.squashfs > /dev/null 2>&1
+
+echo "Writing manifest partition"
+dd if=$(pwd)/manifest.squashfs of=$NEXT_MANIFEST_PART
 
 popd > /dev/null
+
+# TODO progress reporting & logs
