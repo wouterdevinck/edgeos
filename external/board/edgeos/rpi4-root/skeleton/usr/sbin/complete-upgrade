@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+source current-boot > /dev/null
+
+if [ "$TRYBOOT" == "1" ]; then
+
+  # TODO More advanced health check? Reaching this point means the system has at 
+  # least succesfully booted, but not that all containers have come up correctly.
+
+  # Complete the upgrade, make the current partition the primary partition 
+  # to boot from going forward.
+  switch-boot $CURRENT_BOOT > /dev/null
+
+fi

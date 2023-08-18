@@ -41,6 +41,10 @@ menuconfiglinux () {
   make O=$1 BR2_EXTERNAL=$EXTDIR linux-menuconfig
 }
 
+menuconfigbusybox () {
+  make O=$1 BR2_EXTERNAL=$EXTDIR busybox-menuconfig
+}
+
 build () {
   make O=$1 BR2_EXTERNAL=$EXTDIR $2
   make O=$1 $3
@@ -70,7 +74,7 @@ case $1 in
 
   ;;
 
-"build"|"toolchain"|"menuconfig-rpi4-toolchain"|"menuconfig-rpi4-boot"|"menuconfig-rpi4-root"|"menuconfig-rpi4-linux")
+"build"|"toolchain"|"menuconfig-rpi4-toolchain"|"menuconfig-rpi4-boot"|"menuconfig-rpi4-root"|"menuconfig-rpi4-linux"|"menuconfig-rpi4-busybox")
   if [ ! -d "$WORKDIR" ]; then
     printf "\nPlease run prepare first.\n\n"
     exit 2
@@ -99,6 +103,10 @@ case $1 in
 "menuconfig-rpi4-linux")
   menuconfiglinux $OUTDIR_RPI4_BOOT
   ;;
+  
+"menuconfig-rpi4-busybox")
+  menuconfigbusybox $OUTDIR_RPI4_ROOT
+  ;;
 
 "toolchain")
   build $OUTDIR_RPI4_TOOLCHAIN $CONFIG_RPI4_TOOLCHAIN sdk
@@ -126,7 +134,7 @@ case $1 in
   cd $ARTDIR
 
   # Tar artifacts
-  tar -cf edgeos.tar.gz autoboot.vfat boot.vfat rootfs.squashfs
+  tar -czf edgeos.tar.gz autoboot.vfat boot.vfat rootfs.squashfs
 
   # Build Docker images
   docker buildx build --load -t $DOCKER_TAG_OS -f $DOCKERFILE_OS $ARTDIR

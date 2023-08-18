@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+AUTOBOOT="/boot/autoboot/autoboot.txt"
+
+source current-boot > /dev/null
+
+if [ "$#" = 1 ]; then
+  BOOT_TARGET=$1
+else
+  BOOT_TARGET=$NEXT_BOOT
+fi
+
+if [ "$BOOT_TARGET" = "A" ]; then
+  BOOT_PART=$A_BOOT_PART
+  TRYBOOT_PART=$B_BOOT_PART
+else
+  BOOT_PART=$B_BOOT_PART
+  TRYBOOT_PART=$A_BOOT_PART
+fi
+
+cat > $AUTOBOOT <<EOF
+[all]
+tryboot_a_b=1
+boot_partition=${BOOT_PART}
+[tryboot]
+boot_partition=${TRYBOOT_PART}
+[all]
+EOF

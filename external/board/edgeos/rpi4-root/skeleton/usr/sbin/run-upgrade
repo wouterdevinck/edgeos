@@ -4,7 +4,6 @@ set -e
 set -o pipefail
 
 TMPDIR=/var/lib/docker/tmp
-MANIFEST_FILE="$TMPDIR/manifest.json"
 INSTALL_SCRIPT_FILE="$TMPDIR/install"
 
 if [ "$#" -ne 1 ]; then
@@ -13,31 +12,33 @@ if [ "$#" -ne 1 ]; then
 fi
 
 if ! [ -e "$1" ]; then
-  echo "$1 not found" >&2
+  echo "[ERROR] $1 not found" >&2
   exit 1
 fi
 
+# Make temporary directory
+rm -rf $TMPDIR
 mkdir -p $TMPDIR
 
+# Unpack the upgrade package
 tar -xf $1 -C $TMPDIR
 
-if ! [ -e "$MANIFEST_FILE" ]; then
-  echo "$MANIFEST_FILE not found" >&2
-  exit 1
-fi
-
+# Check if the install script is present
 if ! [ -e "$INSTALL_SCRIPT_FILE" ]; then
-  echo "$INSTALL_SCRIPT_FILE not found" >&2
+  echo "[ERROR] $INSTALL_SCRIPT_FILE not found" >&2
+  rm -rf $TMPDIR
   exit 1
 fi
 
-source read-manifest $MANIFEST_FILE
+# Run the install script from the package
+if ! $INSTALL_SCRIPT_FILE $TMPDIR; then
+  echo "[ERROR] Upgrade package install ran into an error"
+  rm -rf $TMPDIR
+  exit 1
+fi
 
-echo "Running install script from package $APP_NAME version $APP_VERSION"
-$INSTALL_SCRIPT_FILE $TMPDIR
-
-echo "Cleaning up"
+# If we reach this point, something went wrong
+# The install script should have rebooted the system
+echo "[ERROR] Upgrade package install script did not run to completion"
 rm -rf $TMPDIR
-
-echo "Rebooting..."
-rebootp "0 tryboot"
+exit 1

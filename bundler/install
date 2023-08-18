@@ -21,42 +21,35 @@ if ! [ -d "$1" ]; then
   exit 1
 fi
 
-source current-boot > /dev/null
-
-if [ "$TRYBOOT" == "1" ]; then
-    echo "An upgrade is already in progress, exiting!" >&2
-    exit 1
-fi
-
 pushd $1 > /dev/null
 
+echo "[0%] Starting upgrade"
+source current-boot > /dev/null 2>&1
+
+echo "[1%] Reading manifest"
 source read-manifest $MANIFEST_FILE
 
-# if ! [ "$EDGEOS_VERSION" == "$CURRENT_EDGEOS_VERSION" ]; then
-# 
-#     echo "Upgrading EdgeOS from version $CURRENT_EDGEOS_VERSION to $EDGEOS_VERSION"
-#     ./get-os $EDGEOS_VERSION
-# 
-# else
-#     echo "EdgeOS version $CURRENT_EDGEOS_VERSION is up to date"
-#     # TODO Also on other partition?
-# fi
+echo "[2%] Package $APP_NAME version $APP_VERSION"
 
-echo "Downloading EdgeOS version $EDGEOS_VERSION"
-./get-os $EDGEOS_VERSION
+echo "[3%] Downloading EdgeOS version $EDGEOS_VERSION"
+./get-os $EDGEOS_VERSION > /dev/null 2>&1
 
-echo "Writing boot partition"
-dd if=$(pwd)/boot.vfat of=$NEXT_BOOT_PART
+echo "[20%] Writing boot partition"
+dd if=$(pwd)/boot.vfat of=$NEXT_BOOT_PART > /dev/null 2>&1
 
-echo "Writing rootfs partition"
-dd if=$(pwd)/rootfs.squashfs of=$NEXT_ROOTFS_PART
+echo "[40%] Writing rootfs partition"
+dd if=$(pwd)/rootfs.squashfs of=$NEXT_ROOTFS_PART > /dev/null 2>&1
 
-echo "Creating manifest partition filesystem"
+echo "[90%] Creating manifest partition filesystem"
 mksquashfs $MANIFEST_FILE $DOCKER_COMPOSE_FILE manifest.squashfs > /dev/null 2>&1
 
-echo "Writing manifest partition"
-dd if=$(pwd)/manifest.squashfs of=$NEXT_MANIFEST_PART
+echo "[91%] Writing manifest partition"
+dd if=$(pwd)/manifest.squashfs of=$NEXT_MANIFEST_PART > /dev/null 2>&1
 
 popd > /dev/null
 
-# TODO progress reporting & logs
+echo "[99%] Cleaning up"
+rm -rf $TMPDIR
+
+echo "[100%] Rebooting..."
+rebootp "0 tryboot"

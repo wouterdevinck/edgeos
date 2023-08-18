@@ -24,6 +24,10 @@ menuconfig-rpi4-root:
 menuconfig-rpi4-linux:
 	./build.sh menuconfig-rpi4-linux
 
+.PHONY: menuconfig-rpi4-busybox
+menuconfig-rpi4-busybox:
+	./build.sh menuconfig-rpi4-busybox
+
 .PHONY: toolchain
 toolchain:
 	./build.sh toolchain
