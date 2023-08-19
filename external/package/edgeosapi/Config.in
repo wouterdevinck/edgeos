@@ -1,0 +1,4 @@
+config BR2_PACKAGE_EDGEOSAPI
+        bool "edgeosapi"
+        help
+          EdgeOS API

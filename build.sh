@@ -15,7 +15,7 @@ OUTDIR="$SCRIPT_DIR/output"
 EXAMPLEDIR="$SCRIPT_DIR/bundler/example"
 ARTDIR="$OUTDIR/artifacts"
 
-EDGEOS_VERSION=$(git describe --tags --dirty)
+export EDGEOS_VERSION=$(git describe --tags --dirty)
 
 DOCKERFILE_OS="$SCRIPT_DIR/docker/Dockerfile-edgeos"
 DOCKERFILE_BUNDLER="$SCRIPT_DIR/docker/Dockerfile-bundler"
@@ -47,7 +47,7 @@ menuconfigbusybox () {
 
 build () {
   make O=$1 BR2_EXTERNAL=$EXTDIR $2
-  make O=$1 $3
+  GOWORK=off make O=$1 $3
 }
 
 case $1 in
