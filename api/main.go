@@ -2,128 +2,59 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
-	"regexp"
-	"sync"
+	"os/exec"
 )
 
-var (
-	listUserRe   = regexp.MustCompile(`^\/users[\/]*$`)
-	getUserRe    = regexp.MustCompile(`^\/users\/(\d+)$`)
-	createUserRe = regexp.MustCompile(`^\/users[\/]*$`)
-)
-
-type user struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type status struct {
+	EdgeOsVersion      string `json:"edgeos_version"`
+	BootedFrom         string `json:"booted_from"`
+	ApplicationName    string `json:"application_name"`
+	ApplicationVersion string `json:"application_version"`
 }
 
-type datastore struct {
-	m map[string]user
-	*sync.RWMutex
-}
-
-type userHandler struct {
-	store *datastore
-}
-
-func (h *userHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", "application/json")
-	switch {
-	case r.Method == http.MethodGet && listUserRe.MatchString(r.URL.Path):
-		h.List(w, r)
-		return
-	case r.Method == http.MethodGet && getUserRe.MatchString(r.URL.Path):
-		h.Get(w, r)
-		return
-	case r.Method == http.MethodPost && createUserRe.MatchString(r.URL.Path):
-		h.Create(w, r)
-		return
-	default:
-		notFound(w, r)
-		return
-	}
-}
-
-func (h *userHandler) List(w http.ResponseWriter, r *http.Request) {
-	h.store.RLock()
-	users := make([]user, 0, len(h.store.m))
-	for _, v := range h.store.m {
-		users = append(users, v)
-	}
-	h.store.RUnlock()
-	jsonBytes, err := json.Marshal(users)
-	if err != nil {
-		internalServerError(w, r)
-		return
-	}
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-type", "Application/json")
+	var status status
+	osversion, _ := exec.Command("bash", "-c", "source current-boot > /dev/null; echo -n $CURRENT_EDGEOS_VERSION").Output()
+	status.EdgeOsVersion = string(osversion)
+	boot, _ := exec.Command("bash", "-c", "source current-boot > /dev/null; echo -n $CURRENT_BOOT").Output()
+	status.BootedFrom = string(boot)
+	name, _ := exec.Command("bash", "-c", "source read-manifest /boot/manifest/manifest.json > /dev/null; echo -n $APP_NAME").Output()
+	status.ApplicationName = string(name)
+	version, _ := exec.Command("bash", "-c", "source read-manifest /boot/manifest/manifest.json > /dev/null; echo -n $APP_VERSION").Output()
+	status.ApplicationVersion = string(version)
+	jsonBytes, _ := json.Marshal(status)
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonBytes)
 }
 
-func (h *userHandler) Get(w http.ResponseWriter, r *http.Request) {
-	matches := getUserRe.FindStringSubmatch(r.URL.Path)
-	if len(matches) < 2 {
-		notFound(w, r)
-		return
+func rebootHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		w.WriteHeader(http.StatusOK)
+		exec.Command("reboot").Run()
 	}
-	h.store.RLock()
-	u, ok := h.store.m[matches[1]]
-	h.store.RUnlock()
-	if !ok {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("user not found"))
-		return
-	}
-	jsonBytes, err := json.Marshal(u)
-	if err != nil {
-		internalServerError(w, r)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonBytes)
 }
 
-func (h *userHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var u user
-	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
-		internalServerError(w, r)
-		return
+func switchBootHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		exec.Command("switch-boot").Run()
+		w.WriteHeader(http.StatusOK)
 	}
-	h.store.Lock()
-	h.store.m[u.ID] = u
-	h.store.Unlock()
-	jsonBytes, err := json.Marshal(u)
-	if err != nil {
-		internalServerError(w, r)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonBytes)
 }
 
-func internalServerError(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte("internal server error"))
-}
-
-func notFound(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte("not found"))
+func upgradeHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		// TODO Get url from body and run online-upgrade script
+	}
 }
 
 func main() {
 	mux := http.NewServeMux()
-	userH := &userHandler{
-		store: &datastore{
-			m: map[string]user{
-				"1": user{ID: "1", Name: "bob"},
-			},
-			RWMutex: &sync.RWMutex{},
-		},
-	}
-	mux.Handle("/users", userH)
-	mux.Handle("/users/", userH)
-
-	http.ListenAndServe("localhost:8080", mux)
+	mux.HandleFunc("/status", statusHandler)
+	mux.HandleFunc("/reboot", rebootHandler)
+	mux.HandleFunc("/switch", switchBootHandler)
+	mux.HandleFunc("/upgrade", upgradeHandler)
+	log.Fatal(http.ListenAndServe(":7994", mux))
 }

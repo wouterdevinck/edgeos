@@ -14,4 +14,9 @@ if [ "$TRYBOOT" == "1" ]; then
   # to boot from going forward.
   switch-boot $CURRENT_BOOT > /dev/null
 
+  # Clean up
+  rm -rf /var/lib/docker/upgrade
+  rm -rf /var/lib/docker/tmp
+  mkdir /var/lib/docker/upgrade
+
 fi
