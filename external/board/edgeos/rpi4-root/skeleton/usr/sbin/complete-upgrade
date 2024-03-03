@@ -19,4 +19,7 @@ if [ "$TRYBOOT" == "1" ]; then
   rm -rf /var/lib/docker/tmp
   mkdir /var/lib/docker/upgrade
 
+  # Clean docker
+  docker system prune -af
+
 fi
