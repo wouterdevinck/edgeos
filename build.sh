@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-BR_VERSION=2023.05.1
+BR_VERSION=2024.02
 
 CONFIG_RPI4_TOOLCHAIN=edgeos_rpi4_toolchain_defconfig
 CONFIG_RPI4_BOOT=edgeos_rpi4_boot_defconfig
@@ -68,9 +68,11 @@ case $1 in
   rm buildroot-$BR_VERSION.tar.gz
 
   # Apply patches to Buildroot
-  for patch in $PATCHDIR/*; do
-    patch -d $WORKDIR -p0 < $patch
-  done
+  if [ "$(ls $PATCHDIR)" ]; then
+    for patch in $PATCHDIR/*.patch; do
+      patch -d $WORKDIR -p0 < $patch
+    done
+  fi
 
   ;;
 
