@@ -3,7 +3,6 @@ set -e
 
 BR_VERSION=2024.02
 
-CONFIG_RPI4_TOOLCHAIN=edgeos_rpi4_toolchain_defconfig
 CONFIG_RPI4_BOOT=edgeos_rpi4_boot_defconfig
 CONFIG_RPI4_ROOT=edgeos_rpi4_root_defconfig
 
@@ -23,11 +22,9 @@ DOCKERFILE_BUNDLER="$SCRIPT_DIR/docker/Dockerfile-bundler"
 DOCKER_TAG_OS="wouterdevinck/edgeos:$EDGEOS_VERSION"
 DOCKER_TAG_BUNDLER="wouterdevinck/edgeos-bundler:$EDGEOS_VERSION"
 
-CONFPATH_RPI4_TOOLCHAIN="$EXTDIR/configs/$CONFIG_RPI4_TOOLCHAIN"
 CONFPATH_RPI4_BOOT="$EXTDIR/configs/$CONFIG_RPI4_BOOT"
 CONFPATH_RPI4_ROOT="$EXTDIR/configs/$CONFIG_RPI4_ROOT"
 
-OUTDIR_RPI4_TOOLCHAIN="$OUTDIR/rpi4-toolchain"
 OUTDIR_RPI4_BOOT="$OUTDIR/rpi4-boot"
 OUTDIR_RPI4_ROOT="$OUTDIR/rpi4-root"
 
@@ -76,7 +73,7 @@ case $1 in
 
   ;;
 
-"build"|"toolchain"|"menuconfig-rpi4-toolchain"|"menuconfig-rpi4-boot"|"menuconfig-rpi4-root"|"menuconfig-rpi4-linux"|"menuconfig-rpi4-busybox")
+"build"|"menuconfig-rpi4-boot"|"menuconfig-rpi4-root"|"menuconfig-rpi4-linux"|"menuconfig-rpi4-busybox")
   if [ ! -d "$WORKDIR" ]; then
     printf "\nPlease run prepare first.\n\n"
     exit 2
@@ -89,10 +86,6 @@ case $1 in
   fi
   
   ;;&
-
-"menuconfig-rpi4-toolchain")
-  menuconfig $OUTDIR_RPI4_TOOLCHAIN $CONFPATH_RPI4_TOOLCHAIN
-  ;;
 
 "menuconfig-rpi4-boot")
   menuconfig $OUTDIR_RPI4_BOOT $CONFPATH_RPI4_BOOT
@@ -108,10 +101,6 @@ case $1 in
   
 "menuconfig-rpi4-busybox")
   menuconfigbusybox $OUTDIR_RPI4_ROOT
-  ;;
-
-"toolchain")
-  build $OUTDIR_RPI4_TOOLCHAIN $CONFIG_RPI4_TOOLCHAIN sdk
   ;;
 
 "build")

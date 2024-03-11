@@ -8,10 +8,6 @@ version:
 prepare:
 	./build.sh prepare
 
-.PHONY: menuconfig-rpi4-toolchain
-menuconfig-rpi4-toolchain:
-	./build.sh menuconfig-rpi4-toolchain
-
 .PHONY: menuconfig-rpi4-boot
 menuconfig-rpi4-boot:
 	./build.sh menuconfig-rpi4-boot
@@ -27,10 +23,6 @@ menuconfig-rpi4-linux:
 .PHONY: menuconfig-rpi4-busybox
 menuconfig-rpi4-busybox:
 	./build.sh menuconfig-rpi4-busybox
-
-.PHONY: toolchain
-toolchain:
-	./build.sh toolchain
 
 .PHONY: build
 build:
