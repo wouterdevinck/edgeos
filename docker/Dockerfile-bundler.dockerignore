@@ -4,8 +4,8 @@
 !bundler/get-os
 !bundler/process-manifest
 !bundler/install
-!bundler/rpi4-genimage.cfg
-!external/board/edgeos/rpi4-root/skeleton/usr/sbin/read-manifest
+!bundler/genimage-*.cfg
+!external/board/edgeos/common-root/skeleton/usr/sbin/read-manifest
 !buildroot/support/scripts/genimage.sh
-!output/rpi4-boot/host/lib/libconfuse.so.2.1.0
-!output/rpi4-boot/host/bin/genimage
+!output/tools/libconfuse.so.2.1.0
+!output/tools/genimage

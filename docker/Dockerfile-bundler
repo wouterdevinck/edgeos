@@ -16,7 +16,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         gnupg \
         dirmngr \
         squashfs-tools \
-        genext2fs && \
+        genext2fs \
+        qemu-utils && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
     echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
@@ -31,16 +32,16 @@ COPY bundler/create-image /usr/sbin/
 COPY bundler/create-upgrade /usr/sbin/
 COPY bundler/get-os /usr/sbin/
 COPY bundler/process-manifest /usr/sbin/
-COPY external/board/edgeos/rpi4-root/skeleton/usr/sbin/read-manifest /usr/sbin/
+COPY external/board/edgeos/common-root/skeleton/usr/sbin/read-manifest /usr/sbin/
 
 # Genimage
-COPY output/rpi4-boot/host/lib/libconfuse.so.2.1.0 /usr/lib/libconfuse.so.2
-COPY output/rpi4-boot/host/bin/genimage /usr/sbin/
+COPY output/tools/libconfuse.so.2.1.0 /usr/lib/libconfuse.so.2
+COPY output/tools/genimage /usr/sbin/
 COPY buildroot/support/scripts/genimage.sh /usr/sbin/
 
 # Supporting data
 COPY bundler/install /data/
-COPY bundler/rpi4-genimage.cfg /data/
+COPY bundler/genimage-*.cfg /data/
 
 WORKDIR /workdir
 ENTRYPOINT ["dumb-init"]

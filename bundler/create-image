@@ -5,9 +5,27 @@ set -o pipefail
 
 DOCKER_COMPOSE_FILE="docker-compose.yml"
 MANIFEST_FILE="manifest.json"
+
 IMAGE_NAME="disk.img"
+VHDX_NAME="disk.vhdx"
+
+RAW_IMAGE_OUTPUT_EXT="img"
+IMAGE_OUTPUT_EXT="img.gz"
+VHDX_OUTPUT_EXT="vhdx.gz"
 
 WORKDIR="tmp"
+
+# Read and validate arguments
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 pc|rpi4" >&2
+  exit 1
+fi
+if ! [[ $1 = @(rpi4|pc) ]]; then
+  echo "Unknown configuration $2" >&2
+  echo "Usage: $0 pc|rpi4" >&2
+  exit 1
+fi
+EDGEOS_CONFIGURATION=$1 
 
 # Create working directory
 rm -rf $WORKDIR
@@ -24,13 +42,13 @@ pushd $WORKDIR > /dev/null
 source process-manifest $MANIFEST_FILE
 
 # Name resulting file
-DISKNAME_COMPRESSED="$APP_NAME-$APP_VERSION.img.gz"
+OUTPUT_FILENAME="$APP_NAME-$EDGEOS_CONFIGURATION-$APP_VERSION"
 
 # Info message
-echo "Creating disk image $DISKNAME_COMPRESSED for $APP_NAME version $APP_VERSION"
+echo "Creating disk image $OUTPUT_FILENAME for $APP_NAME version $APP_VERSION"
 
 # Get EdgeOS release, containing boot partitions and rootfs image
-get-os $EDGEOS_VERSION
+get-os $EDGEOS_VERSION $EDGEOS_CONFIGURATION
 
 # Create partition with manifest and compose files
 echo "  Creating manifest partition"
@@ -38,15 +56,26 @@ mksquashfs $MANIFEST_FILE $DOCKER_COMPOSE_FILE manifest.squashfs > /dev/null 2>&
 
 # Run genimage
 echo "  Creating image"
-BUILD_DIR=$(pwd) fakeroot genimage.sh -c /data/rpi4-genimage.cfg > /dev/null 2>&1
+BUILD_DIR=$(pwd) fakeroot genimage.sh -c /data/genimage-$EDGEOS_CONFIGURATION.cfg > /dev/null 2>&1
+
+# Convert to vhdx in case of pc configuration
+if [[ $EDGEOS_CONFIGURATION -eq "pc" ]]; then 
+  echo "  Converting image to vhdx"
+  qemu-img convert -f raw $IMAGE_NAME -O vhdx -o subformat=dynamic $VHDX_NAME
+fi
 
 # Compress image
 echo "  Compressing image"
-gzip -c $IMAGE_NAME > $DISKNAME_COMPRESSED 2> /dev/null
+gzip -c $IMAGE_NAME > $OUTPUT_FILENAME.$IMAGE_OUTPUT_EXT 2> /dev/null
+if [[ $EDGEOS_CONFIGURATION -eq "pc" ]]; then 
+  echo "  Compressing vhdx"
+  gzip -c $VHDX_NAME > $OUTPUT_FILENAME.$VHDX_OUTPUT_EXT 2> /dev/null
+fi
 
 # Copy output
+mv $IMAGE_NAME $OUTPUT_FILENAME.$RAW_IMAGE_OUTPUT_EXT
 popd > /dev/null
-cp $WORKDIR/$DISKNAME_COMPRESSED .
+cp $WORKDIR/$OUTPUT_FILENAME.* .
 
 # Clean up
 rm -rf $WORKDIR

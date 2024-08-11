@@ -3,9 +3,6 @@ set -e
 
 BR_VERSION=2024.02
 
-CONFIG_RPI4_BOOT=edgeos_rpi4_boot_defconfig
-CONFIG_RPI4_ROOT=edgeos_rpi4_root_defconfig
-
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 WORKDIR="$SCRIPT_DIR/buildroot"
 EXTDIR="$SCRIPT_DIR/external"
@@ -13,20 +10,17 @@ PATCHDIR="$SCRIPT_DIR/patches"
 OUTDIR="$SCRIPT_DIR/output"
 EXAMPLEDIR="$SCRIPT_DIR/bundler/example"
 ARTDIR="$OUTDIR/artifacts"
+TOOLSDIR="$OUTDIR/tools"
 
 export EDGEOS_VERSION=$(git describe --tags --dirty)
 
 DOCKERFILE_OS="$SCRIPT_DIR/docker/Dockerfile-edgeos"
 DOCKERFILE_BUNDLER="$SCRIPT_DIR/docker/Dockerfile-bundler"
 
-DOCKER_TAG_OS="wouterdevinck/edgeos:$EDGEOS_VERSION"
+DOCKER_NAME_OS="wouterdevinck/edgeos"
 DOCKER_TAG_BUNDLER="wouterdevinck/edgeos-bundler:$EDGEOS_VERSION"
 
-CONFPATH_RPI4_BOOT="$EXTDIR/configs/$CONFIG_RPI4_BOOT"
-CONFPATH_RPI4_ROOT="$EXTDIR/configs/$CONFIG_RPI4_ROOT"
-
-OUTDIR_RPI4_BOOT="$OUTDIR/rpi4-boot"
-OUTDIR_RPI4_ROOT="$OUTDIR/rpi4-root"
+EXAMPLE_RAW_PC_IMAGE="Example-pc-1.0.0.img"
 
 menuconfig () {
   make O=$1 BR2_DEFCONFIG=$2 defconfig
@@ -73,7 +67,35 @@ case $1 in
 
   ;;
 
-"build"|"menuconfig-rpi4-boot"|"menuconfig-rpi4-root"|"menuconfig-rpi4-linux"|"menuconfig-rpi4-busybox")
+"build")
+
+  # Check parameter count
+  if [ $# -ne 2 ]; then 
+    printf "\nUsage: $0 build [rpi4|pc].\n\n"
+    exit 2
+  fi
+  
+  ;;&
+  
+"menuconfig")
+
+  # Check parameter count
+  if [ $# -ne 3 ]; then 
+    printf "\nUsage: $0 menuconfig [rpi4|pc] [boot|root|linux|busybox].\n\n"
+    exit 2
+  fi
+
+  # Check type of menuconfig
+  if ! [[ $3 = @(boot|root|linux|busybox) ]]; then
+    printf "\nUsage: $0 menuconfig [rpi4|pc] [boot|root|linux|busybox].\n\n"
+    exit 2
+  fi
+  
+  ;;&
+
+"build"|"menuconfig")
+
+  # Check if prepare has been run
   if [ ! -d "$WORKDIR" ]; then
     printf "\nPlease run prepare first.\n\n"
     exit 2
@@ -84,23 +106,46 @@ case $1 in
   if [[ $(grep -i Microsoft /proc/version) ]]; then 
     PATH=$(echo $PATH | tr ':' '\n' | grep -v /mnt/ | tr '\n' ':' | head -c -1)
   fi
-  
+
   ;;&
 
-"menuconfig-rpi4-boot")
-  menuconfig $OUTDIR_RPI4_BOOT $CONFPATH_RPI4_BOOT
-  ;;
+"build"|"menuconfig"|"bundle"|"push")
 
-"menuconfig-rpi4-root")
-  menuconfig $OUTDIR_RPI4_ROOT $CONFPATH_RPI4_ROOT
-  ;;
+  # Check build configuration
+  if ! [[ $2 = @(rpi4|pc) ]]; then
+    printf "\nUnknown build configuration.\n\n"
+    exit 2
+  fi
 
-"menuconfig-rpi4-linux")
-  menuconfiglinux $OUTDIR_RPI4_BOOT
-  ;;
-  
-"menuconfig-rpi4-busybox")
-  menuconfigbusybox $OUTDIR_RPI4_ROOT
+  # Build configuration
+  EDGEOS_CONFIGURATION=$2
+  CONFIG_BOOT="edgeos_${EDGEOS_CONFIGURATION}_boot_defconfig"
+  CONFIG_ROOT="edgeos_${EDGEOS_CONFIGURATION}_root_defconfig"
+  OUTDIR_BOOT="$OUTDIR/${EDGEOS_CONFIGURATION}-boot"
+  OUTDIR_ROOT="$OUTDIR/${EDGEOS_CONFIGURATION}-root"
+  CONFPATH_BOOT="$EXTDIR/configs/$CONFIG_BOOT"
+  CONFPATH_ROOT="$EXTDIR/configs/$CONFIG_ROOT"
+  DOCKER_TAG_OS="$DOCKER_NAME_OS-$EDGEOS_CONFIGURATION:$EDGEOS_VERSION"
+
+  ;;&
+
+"menuconfig")
+
+  # Menuconfig
+  case $3 in
+    "boot")
+      menuconfig $OUTDIR_BOOT $CONFPATH_BOOT
+      ;;
+    "root")
+      menuconfig $OUTDIR_ROOT $CONFPATH_ROOT
+      ;;
+    "linux")
+      menuconfiglinux $OUTDIR_BOOT
+      ;;
+    "busybox")
+      menuconfigbusybox $OUTDIR_ROOT
+      ;;
+  esac
   ;;
 
 "build")
@@ -111,24 +156,29 @@ case $1 in
   echo "$EDGEOS_VERSION" > $WORKDIR/edgeos-version
 
   # Build FAT boot partition - containing firmware (& config), kernel and initramfs
-  build $OUTDIR_RPI4_BOOT $CONFIG_RPI4_BOOT
+  build $OUTDIR_BOOT $CONFIG_BOOT
 
   # Build rootfs
-  build $OUTDIR_RPI4_ROOT $CONFIG_RPI4_ROOT
+  build $OUTDIR_ROOT $CONFIG_ROOT
+
+  # Copy tools
+  rm -rf $TOOLSDIR
+  mkdir $TOOLSDIR
+  cp $OUTDIR_BOOT/host/lib/libconfuse.so.2.1.0 $TOOLSDIR
+  cp $OUTDIR_BOOT/host/bin/genimage $TOOLSDIR
 
   # Copy artifacts
   rm -rf $ARTDIR
   mkdir $ARTDIR
-  cp $OUTDIR_RPI4_BOOT/images/autoboot.vfat $ARTDIR
-  cp $OUTDIR_RPI4_BOOT/images/boot.vfat $ARTDIR
-  cp $OUTDIR_RPI4_ROOT/images/rootfs.squashfs $ARTDIR
+  cp $OUTDIR_BOOT/images/*.vfat $ARTDIR
+  cp $OUTDIR_ROOT/images/rootfs.squashfs $ARTDIR
   cd $ARTDIR
 
   # Tar artifacts
-  tar -czf edgeos.tar.gz autoboot.vfat boot.vfat rootfs.squashfs
+  tar -czf edgeos-$EDGEOS_CONFIGURATION.tar.gz *.vfat rootfs.squashfs
 
-  # Build Docker images
-  docker buildx build --load -t $DOCKER_TAG_OS -f $DOCKERFILE_OS $ARTDIR
+  # Build Docker images # TODOTODO
+  docker buildx build --load -t $DOCKER_TAG_OS -f $DOCKERFILE_OS $ARTDIR --build-arg EDGEOS_CONFIGURATION=$EDGEOS_CONFIGURATION
 
   ;;&
 
@@ -147,7 +197,7 @@ case $1 in
   BUNDLER="docker run --rm $BUNDLER_ARGS $DOCKER_TAG_BUNDLER"
 
   $BUNDLER create-upgrade
-  $BUNDLER create-image
+  $BUNDLER create-image $EDGEOS_CONFIGURATION
 
   ;;
 
@@ -158,6 +208,31 @@ case $1 in
 
 "clean")
   rm -rf $WORKDIR $OUTDIR
+  ;;
+
+"qemu")
+
+  # Disk image to run
+  DISK=$EXAMPLEDIR/$EXAMPLE_RAW_PC_IMAGE
+
+  # Check in PC build available to run in QEMU
+  if [ ! -e "$DISK" ]; then
+    printf "\nPlease first build and bundle for PC platform.\n\n"
+    exit 2
+  fi
+
+  # If no EFI NVRAM file, copy the default one
+  if [ ! -e OVMF_VARS.fd ]; then
+    cp /usr/share/OVMF/OVMF_VARS.fd .
+  fi
+
+  # Run PC variant in QEMU with EFI
+  qemu-system-x86_64 \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE.fd \
+    -drive if=pflash,format=raw,file=OVMF_VARS.fd \
+    -drive file=$DISK,format=raw \
+    -m 4G \
+    -nographic
   ;;
 
 *)

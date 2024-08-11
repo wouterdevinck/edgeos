@@ -2,6 +2,8 @@ buildroot
 output
 *.upg
 *.img
-*.img.gz
+*.gz
 tmp
 notes.txt
+OVMF_VARS.fd
+test.sh

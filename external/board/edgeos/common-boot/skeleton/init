@@ -14,30 +14,13 @@ exec 0</dev/console
 exec 1>/dev/console
 exec 2>/dev/console
 
-# Wait for the SSD or SD card to be available by searching for
-# the AUTOBOOT label on the first FAT partition.
-for i in $(seq 20); do
-  AUTOBOOTDEV="$(findfs LABEL=AUTOBOOT 2> /dev/null || true)"
-  if [ -b "$AUTOBOOTDEV" ]; then
-    break
-  fi
-  sleep 1
-done
-
-# Deduce the name of the boot device, e.g. /dev/sda for
-# an SSD, or /dev/mmcblk0(p) for an SD card.
-PREFIX=$(echo $AUTOBOOTDEV | sed 's/.$//')
-DEV=$(echo $PREFIX | sed 's/p$//')
-
-# Find out from the EEPROM bootloader whether we are booted
-# from BOOT_A (FAT partition 2) or from BOOT_B (FAT partition 3).
-DT_BOOTLOADER_PARTITION=/proc/device-tree/chosen/bootloader/partition
-BOOTPART=$(printf "%d" "0x$(od "${DT_BOOTLOADER_PARTITION}" -v -An -t x1 | tr -d ' ' )")
+# Run platform specific init.
+source /usr/sbin/platform-init.sh
 
 # Calculate the names of all relevant partitions.
 BOOTDEV="$PREFIX$BOOTPART"
-ROOTFSDEV="$PREFIX$((BOOTPART+3))"
-MANIFESTDEV="$PREFIX$((BOOTPART+5))"
+ROOTFSDEV="$PREFIX$((SLOT+4))"
+MANIFESTDEV="$PREFIX$((SLOT+6))"
 CONFIGDEV="${PREFIX}9"
 LOGSDEV="${PREFIX}10"
 DOCKERDEV="${PREFIX}11"
@@ -54,7 +37,6 @@ if growpart $DEV 4 > /dev/null 2>&1; then
 fi
 
 # Check & repair file systems.
-fsck -p $AUTOBOOTDEV > /dev/null 2>&1 || true
 fsck -p $BOOTDEV > /dev/null 2>&1 || true
 fsck -p $CONFIGDEV > /dev/null 2>&1 || true
 fsck -p $LOGSDEV > /dev/null 2>&1 || true
@@ -63,11 +45,6 @@ fsck -p $DOCKERDEV > /dev/null 2>&1 || true
 # Mount the read-only SquashFS ROOT_A or ROOT_B root file system partition.
 if ! mount $ROOTFSDEV /mnt; then
   fail_shell "Failed to mount rootfs, dropping to a shell"
-fi
-
-# Mount the AUTOBOOT FAT file system. We need to write to this during upgrade.
-if ! mount $AUTOBOOTDEV /mnt/boot/autoboot; then
-  fail_shell "Failed to mount AUTOBOOT, dropping to a shell"
 fi
 
 # Mount the MANIFEST_A or MANIFEST_B read-only SquashFS partition with manifest and docker-compose file.
