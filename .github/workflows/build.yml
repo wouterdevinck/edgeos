@@ -14,14 +14,28 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+
+    - name: Maximize build space
+      uses: easimon/maximize-build-space@v10
+      with:
+        remove-dotnet: 'true'
+        remove-android: 'true'
+        remove-haskell: 'true'
+        remove-codeql: 'true'
+
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Print the version number
       run: make version
-    
-    - name: Install dependencies
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install libelf-dev
+
+    - name: Download buildroot
       run: make prepare
       
     - name: Build for RPI4

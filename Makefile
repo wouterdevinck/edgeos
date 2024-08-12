@@ -41,7 +41,7 @@ build-rpi4:
 	./build.sh build rpi4
 
 .PHONY: push-rpi4
-push:
+push-rpi4:
 	./build.sh push rpi4
 
 .PHONY: bundle-rpi4
@@ -71,7 +71,7 @@ build-pc:
 	./build.sh build pc
 
 .PHONY: push-pc
-push:
+push-pc:
 	./build.sh push pc
 
 .PHONY: bundle-pc
