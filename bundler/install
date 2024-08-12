@@ -52,4 +52,4 @@ echo "[99%] Cleaning up"
 rm -rf $TMPDIR
 
 echo "[100%] Rebooting..."
-rebootp "0 tryboot"
+tryboot

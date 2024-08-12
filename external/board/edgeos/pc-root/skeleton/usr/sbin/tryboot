@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+source current-boot-platform > /dev/null
+
+if [ ! "$TRYBOOT" == "1" ]; then
+
+  if [ $CURRENT_BOOTPART = $A_BOOT_PART ]; then
+    NEXT_EFI_BOOT="0002"
+  else
+    NEXT_EFI_BOOT="0001"
+  fi
+
+  efibootmgr -q --bootnext $NEXT_EFI_BOOT
+  
+  reboot
+
+fi

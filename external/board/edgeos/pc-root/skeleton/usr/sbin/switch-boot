@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+source current-boot > /dev/null
+
+if [ "$#" = 1 ]; then
+  BOOT_TARGET=$1
+else
+  BOOT_TARGET=$NEXT_BOOT
+fi
+
+if [ "$BOOT_TARGET" = "A" ]; then
+  efibootmgr -q -o 1,2
+else
+  efibootmgr -q -o 2,1
+fi

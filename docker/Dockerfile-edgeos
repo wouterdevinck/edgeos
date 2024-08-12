@@ -1,2 +1,3 @@
 FROM scratch
-COPY edgeos.tar.gz .
+ARG EDGEOS_CONFIGURATION
+COPY edgeos-${EDGEOS_CONFIGURATION}.tar.gz .

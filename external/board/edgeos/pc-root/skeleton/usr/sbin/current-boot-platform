@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+A_BOOT_PART="1"
+B_BOOT_PART="2"
+
+CURRENT_BOOTPART=$(expr $(efibootmgr | grep BootCurrent | grep -o -E '[0-9]+') + 0) 
+
+PREFIX="/dev/sda"
+DEV="$PREFIX"
+
+FIRST_IN_BOOT_ORDER=$(expr $(efibootmgr | grep BootOrder | grep -o -E '[0-9]+' | head -n 1) + 0)
+if [ "$CURRENT_BOOTPART" -eq "$FIRST_IN_BOOT_ORDER" ]; then
+  TRYBOOT="0"
+else
+  TRYBOOT="1"
+fi
