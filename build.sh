@@ -177,7 +177,7 @@ case $1 in
   # Tar artifacts
   tar -czf edgeos-$EDGEOS_CONFIGURATION.tar.gz *.vfat rootfs.squashfs
 
-  # Build Docker images # TODOTODO
+  # Build Docker images
   docker buildx build --load -t $DOCKER_TAG_OS -f $DOCKERFILE_OS $ARTDIR --build-arg EDGEOS_CONFIGURATION=$EDGEOS_CONFIGURATION
 
   ;;&
@@ -196,8 +196,13 @@ case $1 in
   BUNDLER_ARGS="-v $EXAMPLEDIR:/workdir -v /var/run/docker.sock:/var/run/docker.sock -u $(id -u $USER):$(getent group docker | cut -d: -f3)"
   BUNDLER="docker run --rm $BUNDLER_ARGS $DOCKER_TAG_BUNDLER"
 
-  $BUNDLER create-upgrade
-  $BUNDLER create-image $EDGEOS_CONFIGURATION
+  IMG_ARGS=""
+  if [[ $EDGEOS_CONFIGURATION -eq "pc" ]]; then 
+    IMG_ARGS="-raw"
+  fi
+
+  $BUNDLER create-upgrade 
+  $BUNDLER create-image $EDGEOS_CONFIGURATION $IMG_ARGS
 
   ;;
 

@@ -9,23 +9,60 @@ MANIFEST_FILE="manifest.json"
 IMAGE_NAME="disk.img"
 VHDX_NAME="disk.vhdx"
 
-RAW_IMAGE_OUTPUT_EXT="img"
-IMAGE_OUTPUT_EXT="img.gz"
-VHDX_OUTPUT_EXT="vhdx.gz"
-
 WORKDIR="tmp"
 
+EXT_COMPRESSED_RAW="img.gz"
+EXT_COMPRESSED_VHDX="vhdx.gz"
+EXT_UNCOMPRESSED_RAW="img"
+
+OUT_COMPRESSED_RAW=true
+OUT_COMPRESSED_VHDX=true
+OUT_UNCOMPRESSED_RAW=false
+
 # Read and validate arguments
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 pc|rpi4" >&2
+if [ "$#" -lt 1 ]; then
+  echo "Usage: $0 pc|rpi4 [options]" >&2
   exit 1
 fi
 if ! [[ $1 = @(rpi4|pc) ]]; then
   echo "Unknown configuration $2" >&2
-  echo "Usage: $0 pc|rpi4" >&2
+  echo "Usage: $0 pc|rpi4 [options]" >&2
   exit 1
 fi
 EDGEOS_CONFIGURATION=$1 
+shift
+while test $# -gt 0
+do
+  case "$1" in
+    -uncompressed-raw) 
+      OUT_UNCOMPRESSED_RAW=true
+      ;;
+    -no-compressed-raw)
+      OUT_COMPRESSED_RAW=false
+      ;;
+    -no-compressed-vhdx)
+      OUT_COMPRESSED_VHDX=false
+      ;;
+    -raw)
+      OUT_UNCOMPRESSED_RAW=true
+      OUT_COMPRESSED_RAW=false
+      OUT_COMPRESSED_VHDX=false
+      ;;
+    -*)
+      echo "Bad option $1" >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+if [ ! "$OUT_UNCOMPRESSED_RAW" = true ] ; then
+  if [ ! "$OUT_COMPRESSED_RAW" = true ] ; then
+    if [ ! "$OUT_COMPRESSED_VHDX" = true ] ; then
+      echo "Nothing to do"
+      exit 0
+    fi
+  fi
+fi
 
 # Create working directory
 rm -rf $WORKDIR
@@ -59,21 +96,29 @@ echo "  Creating image"
 BUILD_DIR=$(pwd) fakeroot genimage.sh -c /data/genimage-$EDGEOS_CONFIGURATION.cfg > /dev/null 2>&1
 
 # Convert to vhdx in case of pc configuration
-if [[ $EDGEOS_CONFIGURATION -eq "pc" ]]; then 
-  echo "  Converting image to vhdx"
-  qemu-img convert -f raw $IMAGE_NAME -O vhdx -o subformat=dynamic $VHDX_NAME
+if [ "$OUT_COMPRESSED_VHDX" = true ] ; then
+  if [[ $EDGEOS_CONFIGURATION -eq "pc" ]]; then 
+    echo "  Converting image to vhdx"
+    qemu-img convert -f raw $IMAGE_NAME -O vhdx -o subformat=dynamic $VHDX_NAME
+  fi
 fi
 
-# Compress image
-echo "  Compressing image"
-gzip -c $IMAGE_NAME > $OUTPUT_FILENAME.$IMAGE_OUTPUT_EXT 2> /dev/null
-if [[ $EDGEOS_CONFIGURATION -eq "pc" ]]; then 
-  echo "  Compressing vhdx"
-  gzip -c $VHDX_NAME > $OUTPUT_FILENAME.$VHDX_OUTPUT_EXT 2> /dev/null
+# Compress images
+if [ "$OUT_COMPRESSED_RAW" = true ] ; then
+  echo "  Compressing image"
+  gzip -c $IMAGE_NAME > $OUTPUT_FILENAME.$EXT_COMPRESSED_RAW 2> /dev/null
+fi
+if [ "$OUT_COMPRESSED_VHDX" = true ] ; then
+  if [[ $EDGEOS_CONFIGURATION -eq "pc" ]]; then 
+    echo "  Compressing vhdx"
+    gzip -c $VHDX_NAME > $OUTPUT_FILENAME.$EXT_COMPRESSED_VHDX 2> /dev/null
+  fi
 fi
 
 # Copy output
-mv $IMAGE_NAME $OUTPUT_FILENAME.$RAW_IMAGE_OUTPUT_EXT
+if [ "$OUT_UNCOMPRESSED_RAW" = true ] ; then
+  mv $IMAGE_NAME $OUTPUT_FILENAME.$EXT_UNCOMPRESSED_RAW
+fi
 popd > /dev/null
 cp $WORKDIR/$OUTPUT_FILENAME.* .
 

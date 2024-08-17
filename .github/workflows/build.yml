@@ -34,6 +34,7 @@ jobs:
       run: make version
 
     - name: Install build dependencies
+      if: matrix.configuration == 'pc'
       run: |
         sudo apt-get update
         sudo apt-get -y install libelf-dev

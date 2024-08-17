@@ -26,6 +26,9 @@ if [ $(efibootmgr | grep edgeos- | wc -l) -ne 2 ]; then
   # Set timeout to zero
   efibootmgr -q -t 0 
 
+  # Reboot to make sure BootCurrent is correct
+  reboot -f
+
 fi
 
 # Currently booted from

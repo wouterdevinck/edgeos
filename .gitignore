@@ -3,7 +3,7 @@ output
 *.upg
 *.img
 *.gz
+*.fd
 tmp
 notes.txt
-OVMF_VARS.fd
 test.sh
