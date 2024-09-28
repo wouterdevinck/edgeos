@@ -26,7 +26,7 @@ LOGSDEV="${PREFIX}10"
 DOCKERDEV="${PREFIX}11"
 
 # Attempt to resize DOCKER partition to fill the rest of the disk.
-if growpart $DEV 4 > /dev/null 2>&1; then
+if growpart $DEV $EXTPART > /dev/null 2>&1; then
   if ! growpart $DEV 11 > /dev/null 2>&1; then
     fail_shell "Failed to grow the DOCKER partition, dropping to a shell"
   fi

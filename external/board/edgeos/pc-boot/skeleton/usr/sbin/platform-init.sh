@@ -5,6 +5,9 @@ set -e
 PREFIX="/dev/sda"
 DEV="$PREFIX"
 
+# Extended partition
+EXTPART=3
+
 # Enable efibootmgr
 mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 

@@ -226,6 +226,9 @@ case $1 in
     exit 2
   fi
 
+  # Make the disk image bigger
+  dd if=/dev/zero of=$DISK seek=10GB obs=1MB count=0
+
   # If no EFI NVRAM file, copy the default one
   if [ ! -e OVMF_VARS.fd ]; then
     cp /usr/share/OVMF/OVMF_VARS.fd .

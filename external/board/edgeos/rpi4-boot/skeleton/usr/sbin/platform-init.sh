@@ -16,6 +16,9 @@ done
 PREFIX=$(echo $AUTOBOOTDEV | sed 's/.$//')
 DEV=$(echo $PREFIX | sed 's/p$//')
 
+# Extended partition
+EXTPART=4
+
 # Find out from the EEPROM bootloader whether we are booted
 # from BOOT_A (FAT partition 2) or from BOOT_B (FAT partition 3).
 DT_BOOTLOADER_PARTITION=/proc/device-tree/chosen/bootloader/partition
