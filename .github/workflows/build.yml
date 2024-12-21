@@ -37,7 +37,7 @@ jobs:
       if: matrix.configuration == 'pc'
       run: |
         sudo apt-get update
-        sudo apt-get -y install libelf-dev
+        sudo apt-get -y install libelf-dev bc
         sudo apt-get autoremove -y
         sudo apt-get clean
         sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

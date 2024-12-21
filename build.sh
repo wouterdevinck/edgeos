@@ -197,7 +197,7 @@ case $1 in
   BUNDLER="docker run --rm $BUNDLER_ARGS $DOCKER_TAG_BUNDLER"
 
   IMG_ARGS=""
-  if [[ $EDGEOS_CONFIGURATION -eq "pc" ]]; then 
+  if [ "$EDGEOS_CONFIGURATION" = "pc" ]; then 
     IMG_ARGS="-raw"
   fi
 

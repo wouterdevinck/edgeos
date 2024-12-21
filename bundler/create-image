@@ -97,7 +97,7 @@ BUILD_DIR=$(pwd) fakeroot genimage.sh -c /data/genimage-$EDGEOS_CONFIGURATION.cf
 
 # Convert to vhdx in case of pc configuration
 if [ "$OUT_COMPRESSED_VHDX" = true ] ; then
-  if [[ $EDGEOS_CONFIGURATION -eq "pc" ]]; then 
+  if [ "$EDGEOS_CONFIGURATION" = "pc" ]; then 
     echo "  Converting image to vhdx"
     qemu-img convert -f raw $IMAGE_NAME -O vhdx -o subformat=dynamic $VHDX_NAME
   fi
@@ -109,7 +109,7 @@ if [ "$OUT_COMPRESSED_RAW" = true ] ; then
   gzip -c $IMAGE_NAME > $OUTPUT_FILENAME.$EXT_COMPRESSED_RAW 2> /dev/null
 fi
 if [ "$OUT_COMPRESSED_VHDX" = true ] ; then
-  if [[ $EDGEOS_CONFIGURATION -eq "pc" ]]; then 
+  if [ "$EDGEOS_CONFIGURATION" = "pc" ]; then 
     echo "  Compressing vhdx"
     gzip -c $VHDX_NAME > $OUTPUT_FILENAME.$EXT_COMPRESSED_VHDX 2> /dev/null
   fi
